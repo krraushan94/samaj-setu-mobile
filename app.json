@@ -17,6 +17,7 @@
       "bundleIdentifier": "com.rammandir.samajsetu",
       "buildNumber": "1",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Samaj Setu needs camera access to attach photos to your issue report.",
         "NSPhotoLibraryUsageDescription": "Samaj Setu needs photo library access to attach images to your report.",
         "NSMicrophoneUsageDescription": "Samaj Setu needs microphone access to record audio for your report.",
