@@ -1,0 +1,73 @@
+export const COLORS = {
+  primary:    '#C62828',   // Deep red — brand
+  secondary:  '#1565C0',   // Blue — action
+  success:    '#2E7D32',
+  warning:    '#F57F17',
+  danger:     '#B71C1C',
+  critical:   '#D50000',
+  background: '#F5F5F5',
+  surface:    '#FFFFFF',
+  text:       '#212121',
+  textLight:  '#757575',
+  border:     '#E0E0E0',
+  sos:        '#FF1744',
+};
+
+export const PRIORITY_COLORS = {
+  low:      '#2E7D32',
+  medium:   '#F57F17',
+  high:     '#E65100',
+  critical: '#D50000',
+};
+
+export const STATUS_COLORS = {
+  payment_pending: '#757575',
+  open:            '#1565C0',
+  in_progress:     '#F57F17',
+  resolved:        '#2E7D32',
+  closed:          '#424242',
+};
+
+export const STATUS_LABELS = {
+  payment_pending: 'Payment Pending',
+  open:            'Open',
+  in_progress:     'In Progress',
+  resolved:        'Resolved',
+  closed:          'Closed',
+};
+
+export const ISSUE_CATEGORIES = [
+  { key: 'infrastructure', label: 'Infrastructure',    icon: 'build',           color: '#5C6BC0' },
+  { key: 'women_safety',   label: 'Women Safety',      icon: 'shield',          color: '#E91E63' },
+  { key: 'security',       label: 'Security & Crime',  icon: 'security',        color: '#F44336' },
+  { key: 'land_property',  label: 'Land & Property',   icon: 'home',            color: '#795548' },
+  { key: 'health',         label: 'Health & Sanitation',icon: 'local-hospital', color: '#009688' },
+  { key: 'education',      label: 'Education',         icon: 'school',          color: '#3F51B5' },
+  { key: 'environment',    label: 'Environment',       icon: 'eco',             color: '#4CAF50' },
+  { key: 'social',         label: 'Social Issues',     icon: 'people',          color: '#9C27B0' },
+  { key: 'missing',        label: 'Missing / Emergency',icon: 'warning',        color: '#FF5722' },
+  { key: 'development',    label: 'Development',       icon: 'location-city',   color: '#607D8B' },
+  { key: 'feedback',       label: 'Feedback',          icon: 'feedback',        color: '#00BCD4' },
+  { key: 'others',         label: 'Others',            icon: 'more-horiz',      color: '#9E9E9E' },
+];
+
+export const SUB_CATEGORIES = {
+  infrastructure:  ['Street Light','Road Damage','Pothole','Water Supply','Drainage/Sewage','Public Toilet','Bridge/Footpath'],
+  women_safety:    ['Eve Teasing','Harassment','Domestic Violence','Stalking','Chain Snatching','Unsafe Area'],
+  security:        ['Theft','Robbery','Threat/Dhamki','Illegal Parking','Anti-social Activity'],
+  land_property:   ['Land Dispute','Illegal Construction','Encroachment','Property Dispute'],
+  health:          ['Open Defecation','Mosquito Breeding','Garbage Dumping','Hospital Complaint','Epidemic Alert'],
+  education:       ['School Infrastructure','Teacher Absenteeism','Mid-Day Meal','Dropout Concern'],
+  environment:     ['Illegal Tree Cutting','Water Body Encroachment','Pollution','Stray Animals'],
+  social:          ['Drug Abuse','Child Labour','Beggar Menace','Domestic Abuse'],
+  missing:         ['Missing Person','Missing Child','Medical Emergency'],
+  development:     ['Ongoing Work Complaint','Fund Misuse','Development Suggestion'],
+  feedback:        ['Appreciation','Suggestion','Event Feedback','General Comment'],
+  others:          ['General Complaint','Any Other'],
+};
+
+export const LANGUAGES = [
+  { code: 'bn', label: 'বাংলা', name: 'Bengali' },
+  { code: 'hi', label: 'हिन्दी', name: 'Hindi' },
+  { code: 'en', label: 'English', name: 'English' },
+];
