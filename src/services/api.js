@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = __DEV__ ? 'http://10.0.2.2:5000/api' : 'https://your-production-url.com/api';
+const API_URL = 'https://samaj-setu-backend.onrender.com/api';
 
 const api = axios.create({ baseURL: API_URL, timeout: 15000 });
 
