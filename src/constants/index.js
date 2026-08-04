@@ -52,19 +52,30 @@ export const ISSUE_CATEGORIES = [
 ];
 
 export const SUB_CATEGORIES = {
-  infrastructure:  ['Street Light','Road Damage','Pothole','Water Supply','Drainage/Sewage','Public Toilet','Bridge/Footpath'],
+  infrastructure:  ['Street Light','Road Damage','Pothole','Water Supply','Drainage/Sewage','Public Toilet','Bridge/Footpath','Disability Access (Ramps/Toilets)'],
   women_safety:    ['Eve Teasing','Harassment','Domestic Violence','Stalking','Chain Snatching','Unsafe Area'],
-  security:        ['Theft','Robbery','Threat/Dhamki','Illegal Parking','Anti-social Activity'],
+  security:        ['Theft','Robbery','Threat/Dhamki','Illegal Parking','Unlawful Activity'],
   land_property:   ['Land Dispute','Illegal Construction','Encroachment','Property Dispute'],
   health:          ['Open Defecation','Mosquito Breeding','Garbage Dumping','Hospital Complaint','Epidemic Alert'],
   education:       ['School Infrastructure','Teacher Absenteeism','Mid-Day Meal','Dropout Concern'],
   environment:     ['Illegal Tree Cutting','Water Body Encroachment','Pollution','Stray Animals'],
-  social:          ['Drug Abuse','Child Labour','Beggar Menace','Domestic Abuse'],
+  social:          ['Drug Abuse','Child Labour','Support Needed','Domestic Abuse','Elder Abuse / Neglect','Caste-Based Discrimination','Mental Health Crisis'],
   missing:         ['Missing Person','Missing Child','Medical Emergency'],
   development:     ['Ongoing Work Complaint','Fund Misuse','Development Suggestion'],
   feedback:        ['Appreciation','Suggestion','Event Feedback','General Comment'],
   others:          ['General Complaint','Any Other'],
 };
+
+// Mirrors backend PAYMENT_EXEMPT_GROUPS/PAYMENT_EXEMPT_SUBCATEGORY_LABELS (backend/src/config/constants.js)
+// — used only to show the "no payment needed" hint before submission; the backend is the source of truth.
+export const PAYMENT_EXEMPT_GROUPS = ['infrastructure', 'women_safety', 'missing'];
+export const PAYMENT_EXEMPT_SUBCATEGORY_LABELS = ['Elder Abuse / Neglect', 'Caste-Based Discrimination', 'Mental Health Crisis'];
+
+// Selecting this sub-category shows the Tele-MANAS helpline immediately, before (optionally)
+// continuing to a confidential report — mental health is a crisis to respond to, not a queue ticket.
+export const MENTAL_HEALTH_SUBCATEGORY = 'Mental Health Crisis';
+
+export const OFFICE_ADDRESS = 'Party Office, Ram Mandir, Hatiara, New Town, Kolkata – 700157';
 
 export const LANGUAGES = [
   { code: 'bn', label: 'বাংলা', name: 'Bengali' },

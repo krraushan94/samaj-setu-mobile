@@ -3,15 +3,18 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { COLORS } from '../../constants';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { useT } from '../../i18n';
 
 export default function LoginScreen({ navigation }) {
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const setAuth  = useAuthStore((s) => s.setAuth);
+  const tr       = useT().login;
+  const trCommon = useT().common;
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading,  setLoading]  = useState(false);
 
   const login = async () => {
-    if (!username || !password) return Alert.alert('Error', 'Enter username/mobile and password');
+    if (!username || !password) return Alert.alert(trCommon.error, 'Enter username/mobile and password');
     setLoading(true);
     try {
       const isPhone = /^\d{10}$/.test(username);
@@ -31,23 +34,28 @@ export default function LoginScreen({ navigation }) {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
         <Text style={styles.emoji}>🏛️</Text>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.sub}>Samaj Setu — New Town Hatiara</Text>
+        <Text style={styles.title}>{tr.title}</Text>
+        <Text style={styles.sub}>{tr.subtitle}</Text>
       </View>
       <View style={styles.card}>
-        <TextInput style={styles.input} placeholder="Mobile Number or Username"
+        <TextInput style={styles.input} placeholder={tr.placeholder}
           value={username} onChangeText={setUsername} autoCapitalize="none" />
-        <TextInput style={styles.input} placeholder="Password" secureTextEntry
+        <TextInput style={styles.input} placeholder={tr.password} secureTextEntry
           value={password} onChangeText={setPassword} />
         <TouchableOpacity style={styles.btn} onPress={login} disabled={loading}>
-          {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Login</Text>}
+          {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>{tr.loginBtn}</Text>}
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.link}>Don't have an account? Sign Up</Text>
+          <Text style={styles.link}>{tr.signUp}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={[styles.link, { marginTop: 4 }]}>Login with OTP instead</Text>
+          <Text style={[styles.link, { marginTop: 4 }]}>{tr.loginOtp}</Text>
         </TouchableOpacity>
+        {username === 'Admin_Raushan' && (
+          <TouchableOpacity onPress={() => navigation.navigate('AdminForgotPassword')}>
+            <Text style={[styles.link, { marginTop: 4 }]}>Forgot admin password?</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </KeyboardAvoidingView>
   );

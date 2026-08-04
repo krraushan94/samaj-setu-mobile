@@ -32,9 +32,14 @@ export default function AdminDashboardScreen({ navigation }) {
             <Text style={styles.headerTitle}>Master Dashboard</Text>
             <Text style={styles.headerSub}>RAM Mandir New Town Hatiara Office</Text>
           </View>
-          <TouchableOpacity onPress={() => { logout(); navigation.replace('Welcome'); }}>
-            <MaterialIcons name="logout" size={24} color="#FFF" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            <TouchableOpacity onPress={() => navigation.navigate('AccessibilitySettings')} accessibilityLabel="Settings">
+              <MaterialIcons name="settings" size={24} color="#FFF" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { logout(); navigation.replace('Welcome'); }} accessibilityLabel="Log out">
+              <MaterialIcons name="logout" size={24} color="#FFF" />
+            </TouchableOpacity>
+          </View>
         </View>
       </LinearGradient>
 
@@ -48,6 +53,8 @@ export default function AdminDashboardScreen({ navigation }) {
             <StatTile label="✅ Resolved"   value={stats.tickets?.resolved || 0} color={COLORS.success} icon="check-circle" />
             <StatTile label="Total Users"   value={stats.totalUsers}             color="#6A1B9A" icon="people" />
             <StatTile label="₹ Collected"   value={`₹${stats.cashCollected}`}   color={COLORS.success} icon="attach-money" />
+            <StatTile label="🚩 Needs Review" value={stats.needsReview || 0}     color={COLORS.warning} icon="flag" />
+            <StatTile label="⚠️ Reported Posts" value={stats.reportedPosts || 0} color={COLORS.danger} icon="report" />
           </View>
         )}
 
@@ -56,13 +63,9 @@ export default function AdminDashboardScreen({ navigation }) {
         <View style={styles.actionsRow}>
           {[
             { icon: 'list-alt',      label: 'All Tickets',     screen: 'AdminTickets' },
-            { icon: 'people',        label: 'Users',           screen: 'AdminUsers' },
-            { icon: 'business',      label: 'Departments',     screen: 'AdminDepts' },
+            { icon: 'people',        label: 'Teams',           screen: 'AdminTeams' },
+            { icon: 'flag',          label: 'Reported Posts',  screen: 'AdminReportedPosts' },
             { icon: 'storage',       label: 'Database',        screen: 'AdminDB' },
-            { icon: 'bar-chart',     label: 'Analytics',       screen: 'AdminAnalytics' },
-            { icon: 'campaign',      label: 'Announce',        screen: 'AdminAnnounce' },
-            { icon: 'payments',      label: 'Payments',        screen: 'AdminPayments' },
-            { icon: 'settings',      label: 'Settings',        screen: 'AdminSettings' },
           ].map(a => (
             <TouchableOpacity key={a.screen} style={styles.actionCard} onPress={() => navigation.navigate(a.screen)}>
               <MaterialIcons name={a.icon} size={28} color="#1A237E" />

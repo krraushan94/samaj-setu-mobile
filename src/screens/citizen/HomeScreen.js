@@ -4,11 +4,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, ISSUE_CATEGORIES, STATUS_COLORS, STATUS_LABELS } from '../../constants';
 import { useAuthStore } from '../../store/authStore';
+import { useAccessibilityStore } from '../../store/accessibilityStore';
 import { ticketAPI, adminAPI } from '../../services/api';
+import { useT } from '../../i18n';
+import SimpleHomeScreen from './SimpleHomeScreen';
 
 export default function HomeScreen({ navigation }) {
   const user = useAuthStore((s) => s.user);
-  const [myTickets, setMyTickets] = useState([]);
+  const simpleMode = useAccessibilityStore((s) => s.simpleMode);
+  const tr   = useT().home;
+  const [myTickets,  setMyTickets]  = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadTickets = async () => {
@@ -22,16 +27,17 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     loadTickets();
-    // Record home screen impression
     adminAPI.recordImpression({ screen: 'Home', action: 'view', sessionId: user?.id });
   }, []);
 
   const triggerSOS = () => {
-    Alert.alert('🚨 SOS Emergency', 'This will immediately alert the Social Welfare team. Confirm?',
-      [{ text: 'Cancel', style: 'cancel' },
-       { text: 'Send SOS', style: 'destructive', onPress: () => navigation.navigate('SOS') }]
+    Alert.alert(tr.sosTitle, tr.sosMessage,
+      [{ text: tr.cancel, style: 'cancel' },
+       { text: tr.sendSOS, style: 'destructive', onPress: () => navigation.navigate('SOS') }]
     );
   };
+
+  if (simpleMode) return <SimpleHomeScreen navigation={navigation} />;
 
   return (
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
@@ -39,8 +45,8 @@ export default function HomeScreen({ navigation }) {
       <LinearGradient colors={[COLORS.primary, '#7B1FA2']} style={styles.header}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.greeting}>Namaskar, {user?.full_name?.split(' ')[0] || 'Friend'} 👋</Text>
-            <Text style={styles.area}>New Town Hatiara{user?.ward ? ` • Ward ${user.ward}` : ''}</Text>
+            <Text style={styles.greeting}>{tr.greeting}, {user?.full_name?.split(' ')[0] || 'Friend'} 👋</Text>
+            <Text style={styles.area}>{tr.area}{user?.ward ? ` • Ward ${user.ward}` : ''}</Text>
           </View>
           <TouchableOpacity style={styles.sosBtn} onPress={triggerSOS}>
             <MaterialIcons name="sos" size={20} color="#FFF" />
@@ -52,16 +58,16 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.body}>
         {/* Action Cards */}
         <View style={styles.actionsGrid}>
-          <ActionCard emoji="🔴" label="Log an Issue" color="#FFF3F3" border={COLORS.danger} onPress={() => navigation.navigate('IssueCategory')} />
-          <ActionCard emoji="💬" label="Feedback"      color="#F3F7FF" border={COLORS.secondary} onPress={() => navigation.navigate('IssueCategory', { type: 'feedback' })} />
-          <ActionCard emoji="💡" label="Suggestion"    color="#FFFFF3" border='#F9A825' onPress={() => navigation.navigate('IssueCategory', { type: 'development' })} />
-          <ActionCard emoji="📢" label="Others"        color="#F3FFF3" border={COLORS.success} onPress={() => navigation.navigate('IssueCategory', { type: 'others' })} />
+          <ActionCard emoji="🔴" label={tr.logIssue}   color="#FFF3F3" border={COLORS.danger}     onPress={() => navigation.navigate('IssueCategory')} />
+          <ActionCard emoji="💬" label={tr.feedback}   color="#F3F7FF" border={COLORS.secondary}  onPress={() => navigation.navigate('IssueCategory', { type: 'feedback' })} />
+          <ActionCard emoji="💡" label={tr.suggestion} color="#FFFFF3" border='#F9A825'            onPress={() => navigation.navigate('IssueCategory', { type: 'development' })} />
+          <ActionCard emoji="📢" label={tr.others}     color="#F3FFF3" border={COLORS.success}    onPress={() => navigation.navigate('IssueCategory', { type: 'others' })} />
         </View>
 
         {/* My Recent Tickets */}
-        <Text style={styles.sectionTitle}>My Recent Tickets</Text>
+        <Text style={styles.sectionTitle}>{tr.recentTickets}</Text>
         {myTickets.length === 0
-          ? <Text style={styles.emptyText}>No tickets yet. Log your first issue above!</Text>
+          ? <Text style={styles.emptyText}>{tr.noTickets}</Text>
           : myTickets.map(t => (
               <TouchableOpacity key={t.id} style={styles.ticketCard} onPress={() => navigation.navigate('TicketDetail', { id: t.id })}>
                 <View style={styles.ticketRow}>
@@ -76,17 +82,18 @@ export default function HomeScreen({ navigation }) {
             ))
         }
         <TouchableOpacity style={styles.viewAll} onPress={() => navigation.navigate('MyTickets')}>
-          <Text style={styles.viewAllText}>View All My Tickets →</Text>
+          <Text style={styles.viewAllText}>{tr.viewAll}</Text>
         </TouchableOpacity>
 
         {/* Quick Links */}
-        <Text style={styles.sectionTitle}>Community</Text>
+        <Text style={styles.sectionTitle}>{tr.community}</Text>
         <View style={styles.quickLinks}>
           {[
-            { icon: 'people', label: 'Community Board', screen: 'CommunityBoard' },
-            { icon: 'event', label: 'Events',           screen: 'Events' },
-            { icon: 'person-search', label: 'Missing',  screen: 'Missing' },
-            { icon: 'phone', label: 'Helplines',        screen: 'Helplines' },
+            { icon: 'people',        label: tr.communityBoard, screen: 'CommunityBoard' },
+            { icon: 'event',         label: tr.events,         screen: 'Events' },
+            { icon: 'person-search', label: tr.missing,        screen: 'Missing' },
+            { icon: 'phone',         label: tr.helplines,      screen: 'Helplines' },
+            { icon: 'settings',      label: 'Settings',        screen: 'AccessibilitySettings' },
           ].map(q => (
             <TouchableOpacity key={q.screen} style={styles.quickCard} onPress={() => navigation.navigate(q.screen)}>
               <MaterialIcons name={q.icon} size={28} color={COLORS.primary} />

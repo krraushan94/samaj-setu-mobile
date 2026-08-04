@@ -1,20 +1,72 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS } from '../../constants';
-import { ticketAPI } from '../../services/api';
+import { ticketAPI, departmentAPI } from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
+
+const ACTIONABLE_STATUSES = ['open', 'in_progress', 'resolved', 'closed'];
 
 export default function TicketDetailScreen({ navigation, route }) {
   const { id } = route.params;
+  const role = useAuthStore((s) => s.role);
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState([]);
+  const [resolutionNote, setResolutionNote] = useState('');
+  const [noteText, setNoteText] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const load = () => ticketAPI.getById(id).then(({ data }) => setTicket(data.ticket)).catch(() => {}).finally(() => setLoading(false));
+
+  useEffect(() => { load(); }, [id]);
 
   useEffect(() => {
-    ticketAPI.getById(id).then(({ data }) => setTicket(data.ticket)).catch(() => {}).finally(() => setLoading(false));
-  }, [id]);
+    if (!ticket?.department_id) return;
+    departmentAPI.list().then(({ data }) => {
+      const dept = (data.departments || []).find(d => d.id === ticket.department_id);
+      setMembers((dept?.members || []).filter(m => m && m.is_active));
+    }).catch(() => {});
+  }, [ticket?.department_id]);
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
   if (!ticket)  return <View style={styles.center}><Text>Ticket not found</Text></View>;
+
+  const canAct = (role === 'admin' || role === 'leader') && ticket.canManage !== false;
+
+  const changeStatus = async (status) => {
+    if (status === ticket.status) return;
+    setBusy(true);
+    try {
+      await ticketAPI.updateStatus(ticket.id, { status, note: resolutionNote || undefined });
+      setResolutionNote('');
+      await load();
+    } catch (e) {
+      Alert.alert('Error', e.response?.data?.message || 'Could not update status');
+    } finally { setBusy(false); }
+  };
+
+  const submitNote = async () => {
+    if (!noteText.trim()) return;
+    setBusy(true);
+    try {
+      await ticketAPI.addNote(ticket.id, noteText.trim());
+      setNoteText('');
+      await load();
+    } catch (e) {
+      Alert.alert('Error', e.response?.data?.message || 'Could not add note');
+    } finally { setBusy(false); }
+  };
+
+  const assignTo = async (memberId) => {
+    setBusy(true);
+    try {
+      await ticketAPI.assign(ticket.id, { assignedTo: memberId });
+      await load();
+    } catch (e) {
+      Alert.alert('Error', e.response?.data?.message || 'Could not assign ticket');
+    } finally { setBusy(false); }
+  };
 
   const statusSteps = ['payment_pending','open','in_progress','resolved','closed'];
   const currentStep = statusSteps.indexOf(ticket.status);
@@ -56,6 +108,12 @@ export default function TicketDetailScreen({ navigation, route }) {
         )}
         <View style={styles.row}><MaterialIcons name="business" size={16} color={COLORS.textLight} /><Text style={styles.info}> {ticket.department_name}</Text></View>
         <View style={styles.row}><MaterialIcons name="event" size={16} color={COLORS.textLight} /><Text style={styles.info}> {new Date(ticket.created_at).toLocaleString('en-IN')}</Text></View>
+        {ticket.caregiver_name && (
+          <View style={styles.row}>
+            <MaterialIcons name="volunteer-activism" size={16} color={COLORS.textLight} />
+            <Text style={styles.info}> Caregiver: {ticket.caregiver_name}{ticket.caregiver_mobile ? ` (${ticket.caregiver_mobile})` : ''}</Text>
+          </View>
+        )}
       </View>
 
       {/* Resolution proof */}
@@ -80,6 +138,60 @@ export default function TicketDetailScreen({ navigation, route }) {
         </View>
       )}
 
+      {/* Team / Admin actions — hidden entirely for citizens and for other departments' tickets */}
+      {canAct && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Manage Ticket</Text>
+
+          <Text style={styles.label}>Change Status</Text>
+          <View style={styles.statusRow}>
+            {ACTIONABLE_STATUSES.map(s => (
+              <TouchableOpacity
+                key={s}
+                style={[styles.statusChip, { borderColor: STATUS_COLORS[s] }, ticket.status === s && { backgroundColor: STATUS_COLORS[s] }]}
+                disabled={busy}
+                onPress={() => changeStatus(s)}
+              >
+                <Text style={[styles.statusChipText, { color: ticket.status === s ? '#FFF' : STATUS_COLORS[s] }]}>{STATUS_LABELS[s]}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TextInput
+            style={styles.noteInput}
+            placeholder="Resolution note (used when you move to Resolved/Closed)"
+            value={resolutionNote}
+            onChangeText={setResolutionNote}
+            multiline
+          />
+
+          {members.length > 0 && (
+            <>
+              <Text style={styles.label}>Assign To</Text>
+              <View style={styles.statusRow}>
+                {members.map(m => (
+                  <TouchableOpacity
+                    key={m.id}
+                    style={[styles.assignChip, ticket.assigned_to === m.id && styles.assignChipActive]}
+                    disabled={busy}
+                    onPress={() => assignTo(m.id)}
+                  >
+                    <Text style={[styles.assignChipText, ticket.assigned_to === m.id && styles.assignChipTextActive]}>{m.full_name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
+          <Text style={styles.label}>Add Internal Note</Text>
+          <View style={styles.row}>
+            <TextInput style={[styles.noteInput, { flex: 1, marginBottom: 0 }]} placeholder="Note visible to the team" value={noteText} onChangeText={setNoteText} multiline />
+            <TouchableOpacity style={styles.addNoteBtn} disabled={busy || !noteText.trim()} onPress={submitNote}>
+              <MaterialIcons name="send" size={20} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {/* History */}
       {ticket.history?.length > 0 && (
         <View style={styles.card}>
@@ -88,7 +200,10 @@ export default function TicketDetailScreen({ navigation, route }) {
             <View key={i} style={styles.histItem}>
               <View style={styles.histDot} />
               <View>
-                <Text style={styles.histStatus}>{h.old_status} → {h.new_status}</Text>
+                {h.new_status
+                  ? <Text style={styles.histStatus}>{STATUS_LABELS[h.old_status] || h.old_status || 'Created'} → {STATUS_LABELS[h.new_status] || h.new_status}</Text>
+                  : <Text style={styles.histStatus}>Note by {h.changed_by}</Text>
+                }
                 {h.note && <Text style={styles.histNote}>{h.note}</Text>}
                 <Text style={styles.histDate}>{new Date(h.created_at).toLocaleString('en-IN')}</Text>
               </View>
@@ -131,4 +246,14 @@ const styles = StyleSheet.create({
   histStatus:         { fontSize: 13, fontWeight: '600', color: COLORS.text },
   histNote:           { fontSize: 12, color: COLORS.textLight, marginTop: 2 },
   histDate:           { fontSize: 11, color: COLORS.textLight, marginTop: 2 },
+  label:              { fontSize: 13, fontWeight: '600', color: COLORS.textLight, marginBottom: 8, marginTop: 4 },
+  statusRow:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  statusChip:         { borderWidth: 1.5, borderRadius: 20, paddingVertical: 7, paddingHorizontal: 12 },
+  statusChipText:     { fontSize: 12, fontWeight: '600' },
+  assignChip:         { borderWidth: 1, borderColor: COLORS.border, backgroundColor: '#FFF', borderRadius: 20, paddingVertical: 7, paddingHorizontal: 12 },
+  assignChipActive:   { backgroundColor: COLORS.secondary, borderColor: COLORS.secondary },
+  assignChipText:     { fontSize: 12, fontWeight: '600', color: COLORS.text },
+  assignChipTextActive:{ color: '#FFF' },
+  noteInput:          { borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 10, fontSize: 13, backgroundColor: '#FAFAFA', marginBottom: 12, minHeight: 44, textAlignVertical: 'top' },
+  addNoteBtn:         { backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 14, justifyContent: 'center', marginLeft: 8 },
 });

@@ -33,9 +33,14 @@ export default function TeamDashboardScreen({ navigation }) {
             <Text style={styles.deptLabel}>{user?.department || 'My Department'}</Text>
             <Text style={styles.headerTitle}>Team Dashboard</Text>
           </View>
-          <TouchableOpacity onPress={() => { logout(); navigation.replace('Welcome'); }}>
-            <MaterialIcons name="logout" size={22} color="#FFF" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            <TouchableOpacity onPress={() => navigation.navigate('AccessibilitySettings')} accessibilityLabel="Settings">
+              <MaterialIcons name="settings" size={22} color="#FFF" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { logout(); navigation.replace('Welcome'); }} accessibilityLabel="Log out">
+              <MaterialIcons name="logout" size={22} color="#FFF" />
+            </TouchableOpacity>
+          </View>
         </View>
       </LinearGradient>
 
@@ -56,7 +61,10 @@ export default function TeamDashboardScreen({ navigation }) {
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>No tickets found</Text>}
         renderItem={({ item: t }) => (
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('TeamTicketDetail', { id: t.id })}>
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('TeamTicketDetail', { id: t.id, readOnly: t.canManage === false })}>
+            {t.canManage === false && (
+              <View style={styles.viewOnlyBanner}><Text style={styles.viewOnlyText}>👁️ View only — {t.department_name || 'other department'}</Text></View>
+            )}
             {t.priority === 'critical' && (
               <View style={styles.criticalBanner}><Text style={styles.criticalText}>🔴 CRITICAL — Immediate Action Required</Text></View>
             )}
@@ -96,6 +104,8 @@ const styles = StyleSheet.create({
   card:           { backgroundColor: '#FFF', borderRadius: 14, overflow: 'hidden', elevation: 1 },
   criticalBanner: { backgroundColor: '#FFEBEE', padding: 8 },
   criticalText:   { color: COLORS.critical, fontSize: 12, fontWeight: 'bold' },
+  viewOnlyBanner: { backgroundColor: '#ECEFF1', padding: 8 },
+  viewOnlyText:   { color: COLORS.textLight, fontSize: 12, fontWeight: 'bold' },
   cardTop:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, paddingBottom: 6 },
   ticketNum:      { fontSize: 12, color: COLORS.textLight, fontWeight: '600' },
   badge:          { borderRadius: 6, paddingVertical: 3, paddingHorizontal: 8 },

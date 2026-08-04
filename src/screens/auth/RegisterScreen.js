@@ -3,32 +3,36 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert,
 import { COLORS } from '../../constants';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { useT } from '../../i18n';
 
-const STEP_OTP    = 0;
-const STEP_VERIFY = 1;
-const STEP_PROFILE= 2;
-const STEP_LOCATION=3;
+const STEP_OTP      = 0;
+const STEP_VERIFY   = 1;
+const STEP_PROFILE  = 2;
+const STEP_LOCATION = 3;
 
 export default function RegisterScreen({ navigation }) {
-  const setAuth = useAuthStore((s) => s.setAuth);
-  const [step, setStep] = useState(STEP_OTP);
-  const [loading, setLoading] = useState(false);
+  const setAuth  = useAuthStore((s) => s.setAuth);
+  const tr       = useT().register;
+  const trCommon = useT().common;
+  const [step,      setStep]      = useState(STEP_OTP);
+  const [loading,   setLoading]   = useState(false);
   const [tempToken, setTempToken] = useState('');
   const [form, setForm] = useState({
     mobile: '', otp: '', fullName: '', email: '', gender: '',
     ageGroup: '', pincode: '', mandal: '', ward: '', colony: '', password: '',
+    isCaregiverSignup: false, caregiverName: '', caregiverMobile: '',
   });
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
   const sendOtp = async () => {
-    if (!/^\d{10}$/.test(form.mobile)) return Alert.alert('Error', 'Enter a valid 10-digit mobile number');
+    if (!/^\d{10}$/.test(form.mobile)) return Alert.alert(trCommon.error, 'Enter a valid 10-digit mobile number');
     setLoading(true);
     try {
       await authAPI.sendOtp(form.mobile);
       setStep(STEP_VERIFY);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message || 'Failed to send OTP');
+      Alert.alert(trCommon.error, e.response?.data?.message || 'Failed to send OTP');
     } finally { setLoading(false); }
   };
 
@@ -44,19 +48,19 @@ export default function RegisterScreen({ navigation }) {
         setStep(STEP_PROFILE);
       }
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message || 'Invalid OTP');
+      Alert.alert(trCommon.error, e.response?.data?.message || 'Invalid OTP');
     } finally { setLoading(false); }
   };
 
   const complete = async () => {
-    if (!form.fullName.trim()) return Alert.alert('Error', 'Full name is required');
+    if (!form.fullName.trim()) return Alert.alert(trCommon.error, 'Full name is required');
     setLoading(true);
     try {
       const { data } = await authAPI.register({ ...form, tempToken });
       setAuth(data.user, data.accessToken, data.refreshToken, 'citizen');
       navigation.replace('CitizenTabs');
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message || 'Registration failed');
+      Alert.alert(trCommon.error, e.response?.data?.message || 'Registration failed');
     } finally { setLoading(false); }
   };
 
@@ -69,40 +73,44 @@ export default function RegisterScreen({ navigation }) {
 
       {step === STEP_OTP && (
         <View style={styles.card}>
-          <Text style={styles.title}>Your Mobile Number</Text>
-          <Text style={styles.sub}>We'll send a 6-digit OTP to verify</Text>
-          <TextInput style={styles.input} placeholder="+91 Mobile Number" keyboardType="phone-pad"
+          <Text style={styles.title}>{tr.mobileTitle}</Text>
+          <Text style={styles.sub}>{tr.mobileSub}</Text>
+          <TextInput style={styles.input} placeholder={tr.mobilePlaceholder} keyboardType="phone-pad"
             maxLength={10} value={form.mobile} onChangeText={v => set('mobile', v)} />
-          <Btn title="Send OTP" onPress={sendOtp} loading={loading} />
+          <Btn title={tr.sendOtp} onPress={sendOtp} loading={loading} />
         </View>
       )}
 
       {step === STEP_VERIFY && (
         <View style={styles.card}>
-          <Text style={styles.title}>Enter OTP</Text>
-          <Text style={styles.sub}>Sent to +91 {form.mobile}</Text>
-          <TextInput style={[styles.input, styles.otpInput]} placeholder="6-digit OTP" keyboardType="number-pad"
+          <Text style={styles.title}>{tr.otpTitle}</Text>
+          <Text style={styles.sub}>{tr.otpSentTo}{form.mobile}</Text>
+          <TextInput style={[styles.input, styles.otpInput]} placeholder={tr.otpPlaceholder} keyboardType="number-pad"
             maxLength={6} value={form.otp} onChangeText={v => set('otp', v)} />
-          <Btn title="Verify OTP" onPress={verifyOtp} loading={loading} />
-          <TouchableOpacity onPress={sendOtp}><Text style={styles.resend}>Resend OTP</Text></TouchableOpacity>
+          <Btn title={tr.verifyOtp} onPress={verifyOtp} loading={loading} />
+          <TouchableOpacity onPress={sendOtp}><Text style={styles.resend}>{tr.resendOtp}</Text></TouchableOpacity>
         </View>
       )}
 
       {step === STEP_PROFILE && (
         <View style={styles.card}>
-          <Text style={styles.title}>Tell us about you</Text>
-          <TextInput style={styles.input} placeholder="Full Name *" value={form.fullName} onChangeText={v => set('fullName', v)} />
-          <TextInput style={styles.input} placeholder="Email (optional)" keyboardType="email-address" value={form.email} onChangeText={v => set('email', v)} />
-          <TextInput style={styles.input} placeholder="Password (optional)" secureTextEntry value={form.password} onChangeText={v => set('password', v)} />
-          <Text style={styles.label}>Gender</Text>
+          <Text style={styles.title}>{tr.profileTitle}</Text>
+          <TextInput style={styles.input} placeholder={tr.fullName} value={form.fullName} onChangeText={v => set('fullName', v)} />
+          <TextInput style={styles.input} placeholder={tr.email} keyboardType="email-address" value={form.email} onChangeText={v => set('email', v)} />
+          <TextInput style={styles.input} placeholder={tr.password} secureTextEntry value={form.password} onChangeText={v => set('password', v)} />
+          <Text style={styles.label}>{tr.gender}</Text>
           <View style={styles.row}>
-            {['male','female','other'].map(g => (
-              <TouchableOpacity key={g} style={[styles.chip, form.gender===g && styles.chipActive]} onPress={() => set('gender', g)}>
-                <Text style={[styles.chipText, form.gender===g && styles.chipTextActive]}>{g.charAt(0).toUpperCase()+g.slice(1)}</Text>
+            {[
+              { key: 'male',   label: tr.male },
+              { key: 'female', label: tr.female },
+              { key: 'other',  label: tr.other },
+            ].map(g => (
+              <TouchableOpacity key={g.key} style={[styles.chip, form.gender===g.key && styles.chipActive]} onPress={() => set('gender', g.key)}>
+                <Text style={[styles.chipText, form.gender===g.key && styles.chipTextActive]}>{g.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={styles.label}>Age Group</Text>
+          <Text style={styles.label}>{tr.ageGroup}</Text>
           <View style={styles.row}>
             {['Under 18','18-35','36-60','60+'].map(ag => (
               <TouchableOpacity key={ag} style={[styles.chip, form.ageGroup===ag && styles.chipActive]} onPress={() => set('ageGroup', ag)}>
@@ -110,18 +118,28 @@ export default function RegisterScreen({ navigation }) {
               </TouchableOpacity>
             ))}
           </View>
-          <Btn title="Next →" onPress={() => setStep(STEP_LOCATION)} />
+          <TouchableOpacity style={styles.caregiverRow} onPress={() => set('isCaregiverSignup', !form.isCaregiverSignup)}>
+            <View style={[styles.checkbox, form.isCaregiverSignup && styles.checkboxActive]} />
+            <Text style={styles.caregiverText}>I'm registering this account on behalf of an elderly family member</Text>
+          </TouchableOpacity>
+          {form.isCaregiverSignup && (
+            <>
+              <TextInput style={styles.input} placeholder="Caregiver Full Name" value={form.caregiverName} onChangeText={v => set('caregiverName', v)} />
+              <TextInput style={styles.input} placeholder="Caregiver Mobile Number" keyboardType="phone-pad" maxLength={10} value={form.caregiverMobile} onChangeText={v => set('caregiverMobile', v)} />
+            </>
+          )}
+          <Btn title={tr.nextBtn} onPress={() => setStep(STEP_LOCATION)} />
         </View>
       )}
 
       {step === STEP_LOCATION && (
         <View style={styles.card}>
-          <Text style={styles.title}>Where do you live?</Text>
-          <TextInput style={styles.input} placeholder="Pincode *" keyboardType="number-pad" maxLength={6} value={form.pincode} onChangeText={v => set('pincode', v)} />
-          <TextInput style={styles.input} placeholder="Mandal / Block" value={form.mandal} onChangeText={v => set('mandal', v)} />
-          <TextInput style={styles.input} placeholder="Ward Number (optional)" value={form.ward} onChangeText={v => set('ward', v)} />
-          <TextInput style={styles.input} placeholder="Colony / Area Name" value={form.colony} onChangeText={v => set('colony', v)} />
-          <Btn title="Create My Account ✅" onPress={complete} loading={loading} />
+          <Text style={styles.title}>{tr.locationTitle}</Text>
+          <TextInput style={styles.input} placeholder={tr.pincode} keyboardType="number-pad" maxLength={6} value={form.pincode} onChangeText={v => set('pincode', v)} />
+          <TextInput style={styles.input} placeholder={tr.mandal} value={form.mandal} onChangeText={v => set('mandal', v)} />
+          <TextInput style={styles.input} placeholder={tr.ward} value={form.ward} onChangeText={v => set('ward', v)} />
+          <TextInput style={styles.input} placeholder={tr.colony} value={form.colony} onChangeText={v => set('colony', v)} />
+          <Btn title={tr.createAccount} onPress={complete} loading={loading} />
         </View>
       )}
     </ScrollView>
@@ -153,4 +171,8 @@ const styles = StyleSheet.create({
   btn:          { backgroundColor: COLORS.primary, borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
   btnText:      { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   resend:       { textAlign: 'center', color: COLORS.secondary, marginTop: 12, fontSize: 14 },
+  caregiverRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  checkbox:     { width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, borderColor: COLORS.border },
+  checkboxActive:{ backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  caregiverText:{ flex: 1, fontSize: 13, color: COLORS.textLight },
 });

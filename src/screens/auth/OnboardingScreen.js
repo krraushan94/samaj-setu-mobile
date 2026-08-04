@@ -1,22 +1,21 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
 import { COLORS } from '../../constants';
+import { useT } from '../../i18n';
 
 const { width } = Dimensions.get('window');
 
-const SLIDES = [
-  { emoji: '📢', title: 'Raise Your Voice', subtitle: 'Log street lights, roads, safety, education issues — all in one place' },
-  { emoji: '🎯', title: 'Right Team, Fast', subtitle: 'Your issue reaches the correct department team directly' },
-  { emoji: '🔍', title: 'Track Every Step', subtitle: 'Real-time updates — know exactly when your issue is resolved' },
-  { emoji: '🤝', title: 'Safe & Transparent', subtitle: 'Community-powered. Every citizen\'s voice matters equally' },
-];
+const SLIDE_EMOJIS = ['📢', '🎯', '🔍', '🤝'];
 
 export default function OnboardingScreen({ navigation }) {
+  const tr = useT().onboarding;
   const [index, setIndex] = useState(0);
   const flatRef = useRef(null);
 
+  const slides = tr.slides.map((s, i) => ({ ...s, emoji: SLIDE_EMOJIS[i] }));
+
   const next = () => {
-    if (index < SLIDES.length - 1) {
+    if (index < slides.length - 1) {
       flatRef.current?.scrollToIndex({ index: index + 1 });
       setIndex(index + 1);
     } else {
@@ -27,12 +26,12 @@ export default function OnboardingScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.skip} onPress={() => navigation.replace('Welcome')}>
-        <Text style={styles.skipText}>Skip</Text>
+        <Text style={styles.skipText}>{tr.skip}</Text>
       </TouchableOpacity>
 
       <FlatList
         ref={flatRef}
-        data={SLIDES}
+        data={slides}
         horizontal pagingEnabled scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(_, i) => String(i)}
@@ -46,13 +45,13 @@ export default function OnboardingScreen({ navigation }) {
       />
 
       <View style={styles.dots}>
-        {SLIDES.map((_, i) => (
+        {slides.map((_, i) => (
           <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
         ))}
       </View>
 
       <TouchableOpacity style={styles.btn} onPress={next}>
-        <Text style={styles.btnText}>{index === SLIDES.length - 1 ? "Let's Start →" : 'Next →'}</Text>
+        <Text style={styles.btnText}>{index === slides.length - 1 ? tr.letsStart : tr.next}</Text>
       </TouchableOpacity>
     </View>
   );

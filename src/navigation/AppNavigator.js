@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants';
+import { navigationRef } from './navigationRef';
 
 // Auth screens
 import SplashScreen        from '../screens/auth/SplashScreen';
@@ -11,13 +12,16 @@ import LanguageScreen      from '../screens/auth/LanguageScreen';
 import OnboardingScreen    from '../screens/auth/OnboardingScreen';
 import WelcomeScreen       from '../screens/auth/WelcomeScreen';
 import LoginScreen         from '../screens/auth/LoginScreen';
+import AdminForgotPasswordScreen from '../screens/auth/AdminForgotPasswordScreen';
 import RegisterScreen      from '../screens/auth/RegisterScreen';
 
 // Citizen screens
 import HomeScreen          from '../screens/citizen/HomeScreen';
 import IssueCategoryScreen from '../screens/citizen/IssueCategoryScreen';
+import SOSScreen from '../screens/citizen/SOSScreen';
 import MyTicketsScreen     from '../screens/citizen/MyTicketsScreen';
 import TicketDetailScreen  from '../screens/citizen/TicketDetailScreen';
+import AccessibilitySettingsScreen from '../screens/citizen/AccessibilitySettingsScreen';
 
 // Community screens
 import CommunityBoardScreen from '../screens/community/CommunityBoardScreen';
@@ -28,6 +32,8 @@ import HelplinesScreen     from '../screens/community/HelplinesScreen';
 // Admin screens
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AdminDBScreen        from '../screens/admin/AdminDBScreen';
+import AdminTeamsScreen     from '../screens/admin/AdminTeamsScreen';
+import AdminReportedPostsScreen from '../screens/admin/AdminReportedPostsScreen';
 
 // Team screens
 import TeamDashboardScreen  from '../screens/team/TeamDashboardScreen';
@@ -70,7 +76,7 @@ function TeamTabs() {
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
         {/* Auth flow */}
         <Stack.Screen name="Splash"       component={SplashScreen} />
@@ -78,6 +84,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Onboarding"   component={OnboardingScreen} />
         <Stack.Screen name="Welcome"      component={WelcomeScreen} />
         <Stack.Screen name="Login"        component={LoginScreen} options={{ headerShown: true, title: 'Login' }} />
+        <Stack.Screen name="AdminForgotPassword" component={AdminForgotPasswordScreen} options={{ headerShown: true, title: 'Reset Admin Password' }} />
         <Stack.Screen name="Register"     component={RegisterScreen} options={{ headerShown: true, title: 'Create Account' }} />
 
         {/* Citizen app */}
@@ -88,11 +95,14 @@ export default function AppNavigator() {
         <Stack.Screen name="Events"         component={EventsScreen}       options={{ headerShown: true, title: 'Community Events' }} />
         <Stack.Screen name="Missing"        component={MissingScreen}      options={{ headerShown: true, title: 'Missing Persons' }} />
         <Stack.Screen name="Helplines"      component={HelplinesScreen}    options={{ headerShown: true, title: 'Emergency Helplines' }} />
-        <Stack.Screen name="SOS"            component={IssueCategoryScreen} options={{ headerShown: true, title: '🚨 SOS Emergency' }} />
+        <Stack.Screen name="SOS"            component={SOSScreen}          options={{ headerShown: true, title: '🚨 SOS Emergency', headerLeft: () => null, gestureEnabled: false }} />
+        <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} options={{ headerShown: true, title: 'Settings' }} />
 
         {/* Admin app */}
         <Stack.Screen name="AdminTabs" component={AdminTabs} />
         <Stack.Screen name="AdminDB"   component={AdminDBScreen} options={{ headerShown: true, title: '🗄️ Database Explorer' }} />
+        <Stack.Screen name="AdminTeams" component={AdminTeamsScreen} options={{ headerShown: true, title: '👥 Manage Teams' }} />
+        <Stack.Screen name="AdminReportedPosts" component={AdminReportedPostsScreen} options={{ headerShown: true, title: '🚩 Reported Posts' }} />
 
         {/* Team app */}
         <Stack.Screen name="TeamTabs"        component={TeamTabs} />

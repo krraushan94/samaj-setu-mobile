@@ -1,18 +1,54 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Image } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { COLORS } from '../../constants';
+import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
+import { useAccessibilityStore } from '../../store/accessibilityStore';
+
+const BACKEND_HEALTH = 'https://samaj-setu-backend.onrender.com/health';
+const ROLE_ROUTE = { citizen: 'CitizenTabs', leader: 'TeamTabs', member: 'TeamTabs', admin: 'AdminTabs' };
 
 export default function SplashScreen({ navigation }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
+    // Wake up Render backend while the splash animation plays (fire-and-forget)
+    fetch(BACKEND_HEALTH, { method: 'GET' }).catch(() => {});
+
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
       Animated.spring(scaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }),
     ]).start();
 
-    const timer = setTimeout(() => navigation.replace('Language'), 2500);
+    const resume = async () => {
+      await Promise.all([
+        useThemeStore.getState().loadTheme(),
+        useAccessibilityStore.getState().loadAccessibilitySettings(),
+        useAuthStore.getState().loadFromStorage(),
+      ]);
+
+      const { token, role } = useAuthStore.getState();
+      const { biometricEnabled } = useAccessibilityStore.getState();
+      const destination = token && ROLE_ROUTE[role];
+
+      if (destination && biometricEnabled) {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync().catch(() => false);
+        const isEnrolled   = hasHardware && await LocalAuthentication.isEnrolledAsync().catch(() => false);
+        if (isEnrolled) {
+          const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Unlock Samaj Setu' }).catch(() => ({ success: false }));
+          if (!result.success) {
+            // Biometric failed/cancelled — fall back to a normal login rather than locking the user out
+            return navigation.replace('Welcome');
+          }
+        }
+      }
+
+      navigation.replace(destination || 'Language');
+    };
+
+    const timer = setTimeout(resume, 2500);
     return () => clearTimeout(timer);
   }, []);
 

@@ -2,27 +2,29 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../../constants';
+import { useT } from '../../i18n';
 
 export default function WelcomeScreen({ navigation }) {
+  const tr = useT().welcome;
   return (
     <LinearGradient colors={[COLORS.primary, '#7B1FA2']} style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.hero}>
         <Text style={styles.heroEmoji}>🏛️</Text>
-        <Text style={styles.appName}>Samaj Setu</Text>
-        <Text style={styles.tagline}>RAM Mandir New Town Hatiara</Text>
-        <Text style={styles.tagline2}>Your voice, our action.</Text>
+        <Text style={styles.appName}>{tr.appName}</Text>
+        <Text style={styles.tagline}>{tr.tagline}</Text>
+        <Text style={styles.tagline2}>{tr.tagline2}</Text>
       </View>
 
       <View style={styles.buttons}>
         <TouchableOpacity style={styles.btnPrimary} onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.btnPrimaryText}>Create Account</Text>
+          <Text style={styles.btnPrimaryText}>{tr.createAccount}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.btnSecondary} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.btnSecondaryText}>Login</Text>
+          <Text style={styles.btnSecondaryText}>{tr.login}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('CitizenTabs')}>
-          <Text style={styles.guestText}>Browse as Guest →</Text>
+          <Text style={styles.guestText}>{tr.browseAsGuest}</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
