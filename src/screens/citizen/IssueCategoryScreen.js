@@ -3,16 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert,
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
-import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { COLORS, ISSUE_CATEGORIES, SUB_CATEGORIES, PRIORITY_COLORS, PAYMENT_EXEMPT_GROUPS, PAYMENT_EXEMPT_SUBCATEGORY_LABELS, MENTAL_HEALTH_SUBCATEGORY, OFFICE_ADDRESS } from '../../constants';
 import { ticketAPI, paymentAPI, mediaAPI } from '../../services/api';
-import { useAuthStore } from '../../store/authStore';
 import { useT } from '../../i18n';
 
-const SPEECH_LANG = { en: 'en-IN', hi: 'hi-IN', bn: 'bn-IN' };
-
 export default function IssueCategoryScreen({ navigation, route }) {
-  const language = useAuthStore((s) => s.language);
   const tr = useT().issueForm;
   const trCat = useT().categories;
   const STEPS = [tr.stepCategory, tr.stepSubCategory, tr.stepDetails, tr.stepDone];
@@ -24,35 +19,10 @@ export default function IssueCategoryScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [paymentRef, setPaymentRef] = useState('');
   const [paymentRequired, setPaymentRequired] = useState(true);
-  const [listening, setListening] = useState(false);
   const [showMentalHealthHelp, setShowMentalHealthHelp] = useState(false);
 
   const isFeeExempt = PAYMENT_EXEMPT_GROUPS.includes(category) || PAYMENT_EXEMPT_SUBCATEGORY_LABELS.includes(subCategory);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  // Voice-to-text for the description field — requires a native rebuild (EAS Build),
-  // not available in plain Expo Go.
-  useSpeechRecognitionEvent('result', (event) => {
-    const text = event.results?.[0]?.transcript;
-    if (text) set('description', text);
-  });
-  useSpeechRecognitionEvent('end', () => setListening(false));
-  useSpeechRecognitionEvent('error', () => setListening(false));
-
-  const toggleVoiceInput = async () => {
-    if (listening) {
-      ExpoSpeechRecognitionModule.stop();
-      return;
-    }
-    const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!granted) return Alert.alert('Permission needed', 'Microphone access is required for voice input');
-    setListening(true);
-    ExpoSpeechRecognitionModule.start({
-      lang: SPEECH_LANG[language] || 'en-IN',
-      interimResults: true,
-      continuous: false,
-    });
-  };
 
   const pickMedia = async (type) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -192,13 +162,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
             <Text style={styles.label}>{tr.titleLabel}</Text>
             <TextInput style={styles.input} value={form.title} onChangeText={v => set('title', v)} placeholder={tr.titlePlaceholder} />
 
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>{tr.descriptionLabel}</Text>
-              <TouchableOpacity style={[styles.micBtn, listening && styles.micBtnActive]} onPress={toggleVoiceInput}>
-                <MaterialIcons name={listening ? 'mic' : 'mic-none'} size={18} color={listening ? '#FFF' : COLORS.primary} />
-                <Text style={[styles.micBtnText, listening && { color: '#FFF' }]}>{listening ? tr.listening : tr.voice}</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.label}>{tr.descriptionLabel}</Text>
             <TextInput style={[styles.input, styles.textarea]} value={form.description} onChangeText={v => set('description', v)}
               placeholder={tr.descriptionPlaceholder} multiline numberOfLines={4} />
 
@@ -316,10 +280,6 @@ const styles = StyleSheet.create({
   subText:         { fontSize: 15, color: COLORS.text },
   subTextActive:   { color: '#FFF', fontWeight: '600' },
   label:           { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 6 },
-  labelRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  micBtn:          { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: COLORS.primary, borderRadius: 16, paddingVertical: 4, paddingHorizontal: 10, marginBottom: 6 },
-  micBtnActive:    { backgroundColor: COLORS.primary },
-  micBtnText:      { fontSize: 12, fontWeight: '600', color: COLORS.primary },
   input:           { borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 12, fontSize: 15, backgroundColor: '#FFF', marginBottom: 14 },
   textarea:        { height: 100, textAlignVertical: 'top' },
   row:             { flexDirection: 'row', gap: 8, marginBottom: 14, alignItems: 'center' },

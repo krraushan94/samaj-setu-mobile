@@ -61,13 +61,6 @@
           "color": "#C62828",
           "sounds": []
         }
-      ],
-      [
-        "expo-speech-recognition",
-        {
-          "microphonePermission": "Samaj Setu needs microphone access for voice-to-text when describing an issue.",
-          "speechRecognitionPermission": "Samaj Setu needs speech recognition access to convert your voice into text."
-        }
       ]
     ],
     "runtimeVersion": {
