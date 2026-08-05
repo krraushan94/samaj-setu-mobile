@@ -26,9 +26,13 @@ export default function HomeScreen({ navigation }) {
   const onRefresh = async () => { setRefreshing(true); await loadTickets(); setRefreshing(false); };
 
   useEffect(() => {
+    // Guests (Browse as Guest, no logged-in user) can't call either endpoint — both
+    // require auth. Skip them rather than firing a 401 that would otherwise surface
+    // as a background error every time this screen mounts.
+    if (!user) return;
     loadTickets();
-    adminAPI.recordImpression({ screen: 'Home', action: 'view', sessionId: user?.id });
-  }, []);
+    adminAPI.recordImpression({ screen: 'Home', action: 'view', sessionId: user.id }).catch(() => {});
+  }, [user]);
 
   const triggerSOS = () => {
     Alert.alert(tr.sosTitle, tr.sosMessage,

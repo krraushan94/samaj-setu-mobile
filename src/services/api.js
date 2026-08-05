@@ -36,6 +36,16 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // A guest (no stored session at all) hitting an auth-required endpoint — e.g.
+    // recordImpression or the tickets list firing in the background on CitizenTabs.
+    // There's no session to refresh or log out of, so don't force a navigation reset —
+    // that was bouncing "Browse as Guest" straight back to the Welcome/Login screen the
+    // moment any background call 401'd. Let the calling screen's own catch handle it.
+    const authRaw = await AsyncStorage.getItem('auth');
+    if (!authRaw) {
+      return Promise.reject(error);
+    }
+
     if (isRefreshing) {
       // Queue this request — it will retry once the refresh completes
       return new Promise((resolve, reject) => {
