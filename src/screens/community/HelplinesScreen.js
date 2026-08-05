@@ -26,6 +26,7 @@ const ALL_HELPLINES = [
 export default function HelplinesScreen() {
   const t   = useTheme();
   const tr  = useT().helplines;
+  const trCommon = useT().common;
   const [tab, setTab]             = useState('emergency');
   const [locLoading, setLocLoading] = useState(false);
 
@@ -42,7 +43,10 @@ export default function HelplinesScreen() {
       const url = `https://www.google.com/maps/search/${encodeURIComponent(query)}/@${latitude},${longitude},15z`;
       await Linking.openURL(url);
     } catch {
-      Alert.alert(tr.mapsError, tr.locationDenied);
+      // Reached only after permission was already granted above — a genuine failure
+      // (maps app missing, location fetch failed), not a permission issue, so don't
+      // reuse the permission-denied copy here.
+      Alert.alert(trCommon.error, tr.mapsError);
     } finally {
       setLocLoading(false);
     }

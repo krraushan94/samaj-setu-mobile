@@ -22,8 +22,8 @@ export default function LoginScreen({ navigation }) {
 
       setAuth(data.user || data.member || { username }, data.accessToken, data.refreshToken, data.role);
 
-      if (data.role === 'admin')  return navigation.replace('AdminTabs');
-      if (data.role === 'leader') return navigation.replace('TeamTabs');
+      if (data.role === 'admin') return navigation.replace('AdminTabs');
+      if (data.role === 'leader' || data.role === 'member') return navigation.replace('TeamTabs');
       navigation.replace('CitizenTabs');
     } catch (e) {
       Alert.alert('Login Failed', e.response?.data?.message || 'Invalid credentials');
