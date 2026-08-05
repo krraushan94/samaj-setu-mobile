@@ -34,6 +34,7 @@ import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AdminDBScreen        from '../screens/admin/AdminDBScreen';
 import AdminTeamsScreen     from '../screens/admin/AdminTeamsScreen';
 import AdminReportedPostsScreen from '../screens/admin/AdminReportedPostsScreen';
+import AdminManageAdminsScreen from '../screens/admin/AdminManageAdminsScreen';
 
 // Team screens
 import TeamDashboardScreen  from '../screens/team/TeamDashboardScreen';
@@ -103,6 +104,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AdminDB"   component={AdminDBScreen} options={{ headerShown: true, title: '🗄️ Database Explorer' }} />
         <Stack.Screen name="AdminTeams" component={AdminTeamsScreen} options={{ headerShown: true, title: '👥 Manage Teams' }} />
         <Stack.Screen name="AdminReportedPosts" component={AdminReportedPostsScreen} options={{ headerShown: true, title: '🚩 Reported Posts' }} />
+        <Stack.Screen name="AdminManageAdmins" component={AdminManageAdminsScreen} options={{ headerShown: true, title: '🛡️ Manage Admins' }} />
 
         {/* Team app */}
         <Stack.Screen name="TeamTabs"        component={TeamTabs} />

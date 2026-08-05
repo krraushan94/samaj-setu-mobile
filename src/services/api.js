@@ -151,6 +151,11 @@ export const adminAPI = {
   getImpressions:   () => api.get('/admin/impressions'),
   recordImpression: (data) => api.post('/admin/impressions', data),
   updateTeamMember: (id, data) => api.patch(`/admin/team-members/${id}`, data),
+  // Sub-admins — Admin_Raushan only (up to 5 additional, limited-power admin accounts)
+  listSubAdmins:    () => api.get('/admin/sub-admins'),
+  addSubAdmin:      (data) => api.post('/admin/sub-admins', data),
+  updateSubAdmin:   (id, data) => api.patch(`/admin/sub-admins/${id}`, data),
+  removeSubAdmin:   (id) => api.delete(`/admin/sub-admins/${id}`),
 };
 
 export const notificationAPI = {
@@ -169,6 +174,9 @@ export const departmentAPI = {
   list:         () => api.get('/departments'),
   addMember:    (deptId, data) => api.post(`/departments/${deptId}/members`, data),
   removeMember: (memberId) => api.delete(`/departments/members/${memberId}`),
+  // Team leader adding a member to their own department (department is inferred
+  // server-side from the leader's own token, not passed by the client).
+  addOwnMember: (data) => api.post('/departments/members', data),
 };
 
 export default api;

@@ -8,6 +8,8 @@ import { useAuthStore } from '../../store/authStore';
 
 export default function AdminDashboardScreen({ navigation }) {
   const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
+  const isPrimaryAdmin = user?.username === 'Admin_Raushan';
   const [stats, setStats] = useState(null);
   const [deptStats, setDeptStats] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -28,7 +30,7 @@ export default function AdminDashboardScreen({ navigation }) {
       <LinearGradient colors={['#1A237E', '#283593']} style={styles.header}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.adminLabel}>🛡️ Admin_Raushan</Text>
+            <Text style={styles.adminLabel}>🛡️ {user?.username || 'Admin'}</Text>
             <Text style={styles.headerTitle}>Master Dashboard</Text>
             <Text style={styles.headerSub}>RAM Mandir New Town Hatiara Office</Text>
           </View>
@@ -52,7 +54,9 @@ export default function AdminDashboardScreen({ navigation }) {
             <StatTile label="⏳ Pmt Pending"value={stats.tickets?.payment_pending || 0} color={COLORS.textLight} icon="payment" />
             <StatTile label="✅ Resolved"   value={stats.tickets?.resolved || 0} color={COLORS.success} icon="check-circle" />
             <StatTile label="Total Users"   value={stats.totalUsers}             color="#6A1B9A" icon="people" />
-            <StatTile label="₹ Collected"   value={`₹${stats.cashCollected}`}   color={COLORS.success} icon="attach-money" />
+            {isPrimaryAdmin && stats.cashCollected !== undefined && (
+              <StatTile label="₹ Collected" value={`₹${stats.cashCollected}`}   color={COLORS.success} icon="attach-money" />
+            )}
             <StatTile label="🚩 Needs Review" value={stats.needsReview || 0}     color={COLORS.warning} icon="flag" />
             <StatTile label="⚠️ Reported Posts" value={stats.reportedPosts || 0} color={COLORS.danger} icon="report" />
           </View>
@@ -66,6 +70,7 @@ export default function AdminDashboardScreen({ navigation }) {
             { icon: 'people',        label: 'Teams',           screen: 'AdminTeams' },
             { icon: 'flag',          label: 'Reported Posts',  screen: 'AdminReportedPosts' },
             { icon: 'storage',       label: 'Database',        screen: 'AdminDB' },
+            ...(isPrimaryAdmin ? [{ icon: 'admin-panel-settings', label: 'Manage Admins', screen: 'AdminManageAdmins' }] : []),
           ].map(a => (
             <TouchableOpacity key={a.screen} style={styles.actionCard} onPress={() => navigation.navigate(a.screen)}>
               <MaterialIcons name={a.icon} size={28} color="#1A237E" />

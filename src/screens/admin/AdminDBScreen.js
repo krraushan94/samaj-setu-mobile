@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, Activit
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
 import { adminAPI } from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
 
 const TABLES = [
   { key: 'users',             label: 'Users',            icon: 'people',          color: '#1565C0' },
@@ -20,6 +21,8 @@ const TABLES = [
 ];
 
 export default function AdminDBScreen({ navigation }) {
+  const user = useAuthStore((s) => s.user);
+  const isPrimaryAdmin = user?.username === 'Admin_Raushan';
   const [selected, setSelected] = useState(null);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -44,6 +47,21 @@ export default function AdminDBScreen({ navigation }) {
       Alert.alert('Export', 'CSV export initiated (check Downloads)');
     } catch { Alert.alert('Error', 'Export failed'); }
   };
+
+  if (!isPrimaryAdmin) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerBar}>
+          <Text style={styles.pageTitle}>🗄️ Database Explorer</Text>
+          <Text style={styles.pageSub}>Admin_Raushan — Read-only access</Text>
+        </View>
+        <View style={styles.restricted}>
+          <MaterialIcons name="lock" size={40} color={COLORS.textLight} />
+          <Text style={styles.restrictedText}>Restricted to Admin_Raushan — raw data access, including payments, isn't delegated to sub-admins.</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (!selected) {
     return (
@@ -125,6 +143,8 @@ const styles = StyleSheet.create({
   pageTitle:      { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
   pageSub:        { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   grid:           { padding: 12, gap: 10 },
+  restricted:     { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 },
+  restrictedText: { fontSize: 14, color: COLORS.textLight, textAlign: 'center', lineHeight: 20 },
   tableCard:      { flex: 1, margin: 5, backgroundColor: '#FFF', borderRadius: 12, padding: 14, alignItems: 'center', gap: 8, borderLeftWidth: 4, elevation: 2, minHeight: 90 },
   tableLabel:     { fontSize: 13, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   backRow:        { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },

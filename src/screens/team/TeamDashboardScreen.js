@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Alert, Modal, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS } from '../../constants';
-import { ticketAPI, paymentAPI } from '../../services/api';
+import { ticketAPI, paymentAPI, departmentAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 
 export default function TeamDashboardScreen({ navigation }) {
   const user = useAuthStore((s) => s.user);
+  const role = useAuthStore((s) => s.role);
   const logout = useAuthStore((s) => s.logout);
   const [tickets, setTickets] = useState([]);
   const [filter, setFilter] = useState('open');
   const [refreshing, setRefreshing] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [memberForm, setMemberForm] = useState({ fullName: '', username: '', password: '' });
+  const [memberError, setMemberError] = useState('');
 
   const load = async () => {
     try {
@@ -25,6 +29,22 @@ export default function TeamDashboardScreen({ navigation }) {
 
   const FILTERS = ['all', 'open', 'in_progress', 'resolved'];
 
+  const submitAddMember = async () => {
+    setMemberError('');
+    if (!memberForm.fullName || !memberForm.username || !memberForm.password) {
+      return setMemberError('Full name, username and password are required');
+    }
+    if (memberForm.password.length < 8) return setMemberError('Password must be at least 8 characters');
+    try {
+      await departmentAPI.addOwnMember(memberForm);
+      setMemberForm({ fullName: '', username: '', password: '' });
+      setShowAddMember(false);
+      Alert.alert('Done', `${memberForm.fullName} added to your team.`);
+    } catch (e) {
+      setMemberError(e.response?.data?.message || 'Could not add team member');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#004D40', '#00695C']} style={styles.header}>
@@ -34,6 +54,11 @@ export default function TeamDashboardScreen({ navigation }) {
             <Text style={styles.headerTitle}>Team Dashboard</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 16 }}>
+            {role === 'leader' && (
+              <TouchableOpacity onPress={() => { setShowAddMember(true); setMemberError(''); }} accessibilityLabel="Add team member">
+                <MaterialIcons name="person-add" size={22} color="#FFF" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={() => navigation.navigate('AccessibilitySettings')} accessibilityLabel="Settings">
               <MaterialIcons name="settings" size={22} color="#FFF" />
             </TouchableOpacity>
@@ -84,6 +109,22 @@ export default function TeamDashboardScreen({ navigation }) {
           </TouchableOpacity>
         )}
       />
+
+      <Modal visible={showAddMember} transparent animationType="fade" onRequestClose={() => setShowAddMember(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Add Team Member</Text>
+            <TextInput style={styles.input} placeholder="Full Name" value={memberForm.fullName} onChangeText={v => setMemberForm(f => ({ ...f, fullName: v }))} />
+            <TextInput style={styles.input} placeholder="Username" value={memberForm.username} onChangeText={v => setMemberForm(f => ({ ...f, username: v }))} autoCapitalize="none" />
+            <TextInput style={styles.input} placeholder="Password (8+ characters)" secureTextEntry value={memberForm.password} onChangeText={v => setMemberForm(f => ({ ...f, password: v }))} />
+            {memberError && <Text style={styles.modalError}>{memberError}</Text>}
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowAddMember(false)}><Text>Cancel</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.createBtn} onPress={submitAddMember}><Text style={styles.createBtnText}>Add</Text></TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -115,4 +156,13 @@ const styles = StyleSheet.create({
   meta:           { fontSize: 12, color: COLORS.textLight },
   statusBadge:    { borderRadius: 8, paddingVertical: 3, paddingHorizontal: 8 },
   statusText:     { fontSize: 11, fontWeight: '600' },
+  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 },
+  modalCard:      { backgroundColor: '#FFF', borderRadius: 16, padding: 20 },
+  modalTitle:     { fontSize: 17, fontWeight: 'bold', marginBottom: 14, color: COLORS.text },
+  input:          { borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 12, fontSize: 15, marginBottom: 10 },
+  modalError:     { color: COLORS.danger, fontSize: 13, marginBottom: 8 },
+  modalActions:   { flexDirection: 'row', gap: 10 },
+  cancelBtn:      { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 12, alignItems: 'center' },
+  createBtn:      { flex: 1, backgroundColor: '#00695C', borderRadius: 10, padding: 12, alignItems: 'center' },
+  createBtnText:  { color: '#FFF', fontWeight: 'bold' },
 });
