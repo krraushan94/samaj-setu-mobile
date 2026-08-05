@@ -5,7 +5,9 @@ import { useAuthStore } from '../store/authStore';
 
 const API_URL = 'https://samaj-setu-backend.onrender.com/api';
 
-const api = axios.create({ baseURL: API_URL, timeout: 15000 });
+// Render's free tier can take 30-50s to wake from sleep on the first request after
+// idling — 15s was cutting that off mid-wake and surfacing as a network error.
+const api = axios.create({ baseURL: API_URL, timeout: 60000 });
 
 // ── Request interceptor — attach JWT ────────────────────────────────────────
 api.interceptors.request.use(async (config) => {
