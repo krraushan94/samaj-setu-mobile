@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS } from '../../constants';
 import { ticketAPI, departmentAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import AppText from '../../components/AppText';
 
 const ACTIONABLE_STATUSES = ['open', 'in_progress', 'resolved', 'closed'];
 
@@ -93,7 +94,7 @@ export default function TicketDetailScreen({ navigation, route }) {
             <View key={s} style={styles.timelineItem}>
               <View style={[styles.timelineDot, i <= currentStep && styles.timelineDotActive]} />
               {i < statusSteps.length - 1 && <View style={[styles.timelineLine, i < currentStep && styles.timelineLineActive]} />}
-              <Text style={[styles.timelineLabel, i === currentStep && styles.timelineLabelActive]}>{STATUS_LABELS[s]}</Text>
+              <AppText style={[styles.timelineLabel, i === currentStep && styles.timelineLabelActive]}>{STATUS_LABELS[s]}</AppText>
             </View>
           ))}
         </View>
@@ -229,7 +230,7 @@ const styles = StyleSheet.create({
   card:               { backgroundColor: '#FFF', borderRadius: 14, padding: 16 },
   cardTitle:          { fontSize: 15, fontWeight: 'bold', color: COLORS.text, marginBottom: 12 },
   timeline:           { flexDirection: 'row', alignItems: 'flex-start' },
-  timelineItem:       { alignItems: 'center', flex: 1 },
+  timelineItem:       { alignItems: 'center', flex: 1, paddingHorizontal: 2 },
   timelineDot:        { width: 14, height: 14, borderRadius: 7, backgroundColor: COLORS.border, marginBottom: 4 },
   timelineDotActive:  { backgroundColor: COLORS.primary },
   timelineLine:       { position: 'absolute', left: '50%', top: 6, width: '100%', height: 2, backgroundColor: COLORS.border },

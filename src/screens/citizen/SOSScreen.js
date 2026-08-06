@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } 
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import AppText from '../../components/AppText';
 import { ticketAPI } from '../../services/api';
 import { useT } from '../../i18n';
 
@@ -88,11 +89,11 @@ const CallButtons = ({ tr }) => (
   <View style={styles.callRow}>
     <TouchableOpacity style={[styles.callBtn, { backgroundColor: '#1565C0' }]} onPress={() => Linking.openURL('tel:100')}>
       <MaterialIcons name="local-police" size={20} color="#FFF" />
-      <Text style={styles.callBtnText}>{tr.callPolice}</Text>
+      <AppText style={styles.callBtnText}>{tr.callPolice}</AppText>
     </TouchableOpacity>
     <TouchableOpacity style={[styles.callBtn, { backgroundColor: COLORS.sos }]} onPress={() => Linking.openURL('tel:112')}>
       <MaterialIcons name="emergency" size={20} color="#FFF" />
-      <Text style={styles.callBtnText}>{tr.callEmergency}</Text>
+      <AppText style={styles.callBtnText}>{tr.callEmergency}</AppText>
     </TouchableOpacity>
   </View>
 );
@@ -108,8 +109,8 @@ const styles = StyleSheet.create({
   refBox:      { backgroundColor: '#FFF', borderRadius: 12, padding: 16, width: '100%', marginBottom: 20, alignItems: 'center', elevation: 1 },
   refLabel:    { fontSize: 12, color: COLORS.textLight, marginBottom: 4 },
   refNum:      { fontSize: 20, fontWeight: 'bold', color: COLORS.sos, letterSpacing: 1 },
-  callRow:     { flexDirection: 'row', gap: 10, width: '100%', marginBottom: 20 },
-  callBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, paddingVertical: 14, elevation: 2 },
+  callRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 10, width: '100%', marginBottom: 20 },
+  callBtn:     { flexGrow: 1, flexBasis: 140, minWidth: 140, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 8, elevation: 2 },
   callBtnText: { color: '#FFF', fontSize: 13, fontWeight: 'bold', textAlign: 'center' },
   goBtn:       { backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 32 },
   goBtnText:   { color: '#FFF', fontSize: 15, fontWeight: 'bold' },

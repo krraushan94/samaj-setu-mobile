@@ -22,6 +22,7 @@ import SOSScreen from '../screens/citizen/SOSScreen';
 import MyTicketsScreen     from '../screens/citizen/MyTicketsScreen';
 import TicketDetailScreen  from '../screens/citizen/TicketDetailScreen';
 import AccessibilitySettingsScreen from '../screens/citizen/AccessibilitySettingsScreen';
+import AboutScreen from '../screens/citizen/AboutScreen';
 
 // Community screens
 import CommunityBoardScreen from '../screens/community/CommunityBoardScreen';
@@ -98,6 +99,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Helplines"      component={HelplinesScreen}    options={{ headerShown: true, title: 'Emergency Helplines' }} />
         <Stack.Screen name="SOS"            component={SOSScreen}          options={{ headerShown: true, title: '🚨 SOS Emergency', headerLeft: () => null, gestureEnabled: false }} />
         <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} options={{ headerShown: true, title: 'Settings' }} />
+        <Stack.Screen name="About" component={AboutScreen} options={{ headerShown: true, title: 'About Us' }} />
 
         {/* Admin app */}
         <Stack.Screen name="AdminTabs" component={AdminTabs} />

@@ -97,7 +97,8 @@ export default function HomeScreen({ navigation }) {
             { icon: 'event',         label: tr.events,         screen: 'Events' },
             { icon: 'person-search', label: tr.missing,        screen: 'Missing' },
             { icon: 'phone',         label: tr.helplines,      screen: 'Helplines' },
-            { icon: 'settings',      label: 'Settings',        screen: 'AccessibilitySettings' },
+            { icon: 'info',          label: tr.aboutUs,        screen: 'About' },
+            { icon: 'settings',      label: tr.settings,       screen: 'AccessibilitySettings' },
           ].map(q => (
             <TouchableOpacity key={q.screen} style={styles.quickCard} onPress={() => navigation.navigate(q.screen)}>
               <MaterialIcons name={q.icon} size={28} color={COLORS.primary} />

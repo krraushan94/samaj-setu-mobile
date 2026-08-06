@@ -76,6 +76,10 @@ export const PAYMENT_EXEMPT_SUBCATEGORY_LABELS = ['Elder Abuse / Neglect', 'Cast
 export const MENTAL_HEALTH_SUBCATEGORY = 'Mental Health Crisis';
 
 export const OFFICE_ADDRESS = 'Party Office, Ram Mandir, Hatiara, New Town, Kolkata – 700157';
+export const OFFICE_EMAIL = 'sanatantejas@gmail.com';
+
+export const ABOUT_GUIDANCE_NAME = 'Piyush Kanodia';
+export const ABOUT_GUIDANCE_TITLE = 'MLA, Rajarhat New Town (North 24 Parganas)';
 
 export const LANGUAGES = [
   { code: 'bn', label: 'বাংলা', name: 'Bengali' },

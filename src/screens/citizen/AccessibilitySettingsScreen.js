@@ -86,6 +86,15 @@ export default function AccessibilitySettingsScreen({ navigation }) {
       </Section>
 
       <TouchableOpacity
+        style={[styles.aboutBtn, { borderColor: t.border }]}
+        onPress={() => navigation.navigate('About')}
+        accessibilityLabel="About Us"
+      >
+        <MaterialIcons name="info-outline" size={20} color={t.primary} />
+        <AppText style={[styles.aboutText, { color: t.primary }]}>About Us</AppText>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={[styles.logoutBtn, { borderColor: t.danger }]}
         onPress={() => Alert.alert('Log Out', 'Are you sure?', [
           { text: 'Cancel', style: 'cancel' },
@@ -128,6 +137,8 @@ const styles = StyleSheet.create({
   row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   rowLabel:     { fontSize: 14, fontWeight: '600' },
   rowHint:      { fontSize: 11, marginTop: 2 },
+  aboutBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, padding: 14 },
+  aboutText:    { fontSize: 15, fontWeight: 'bold' },
   logoutBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, padding: 14, marginTop: 4 },
   logoutText:   { fontSize: 15, fontWeight: 'bold' },
 });

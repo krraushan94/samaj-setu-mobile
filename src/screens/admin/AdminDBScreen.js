@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
 import { adminAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import AppText from '../../components/AppText';
 
 const TABLES = [
   { key: 'users',             label: 'Users',            icon: 'people',          color: '#1565C0' },
@@ -78,7 +79,7 @@ export default function AdminDBScreen({ navigation }) {
           renderItem={({ item }) => (
             <TouchableOpacity style={[styles.tableCard, { borderLeftColor: item.color }]} onPress={() => { setSelected(item); loadTable(item.key); }}>
               <MaterialIcons name={item.icon} size={28} color={item.color} />
-              <Text style={styles.tableLabel}>{item.label}</Text>
+              <AppText style={styles.tableLabel}>{item.label}</AppText>
             </TouchableOpacity>
           )}
         />

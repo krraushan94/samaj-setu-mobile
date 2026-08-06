@@ -7,7 +7,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useTheme } from '../../store/themeStore';
 import { useT } from '../../i18n';
-import { OFFICE_ADDRESS } from '../../constants';
+import AppText from '../../components/AppText';
+import { OFFICE_ADDRESS, OFFICE_EMAIL } from '../../constants';
 
 const ALL_HELPLINES = [
   { label: 'Unified Emergency Number', number: '112',   icon: 'emergency',             color: '#D50000' },
@@ -63,10 +64,10 @@ export default function HelplinesScreen() {
           accessibilityLabel="Emergency tab"
         >
           <MaterialIcons name="emergency" size={17} color={tab === 'emergency' ? '#D50000' : t.textLight} />
-          <Text style={[styles.tabText, { color: tab === 'emergency' ? '#D50000' : t.textLight },
+          <AppText style={[styles.tabText, { color: tab === 'emergency' ? '#D50000' : t.textLight },
             tab === 'emergency' && styles.tabTextActive]}>
             {tr.emergencyTab}
-          </Text>
+          </AppText>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -76,10 +77,10 @@ export default function HelplinesScreen() {
           accessibilityLabel="All helplines tab"
         >
           <MaterialIcons name="phone-in-talk" size={17} color={tab === 'all' ? t.primary : t.textLight} />
-          <Text style={[styles.tabText, { color: tab === 'all' ? t.primary : t.textLight },
+          <AppText style={[styles.tabText, { color: tab === 'all' ? t.primary : t.textLight },
             tab === 'all' && styles.tabTextActive]}>
             {tr.allTab}
-          </Text>
+          </AppText>
         </TouchableOpacity>
       </View>
 
@@ -188,6 +189,9 @@ export default function HelplinesScreen() {
                 <Text style={[styles.officeTitle, { color: t.text }]}>{tr.officeTitle}</Text>
                 <Text style={[styles.officeSub, { color: t.textLight }]}>{tr.officeSub}</Text>
                 <Text style={[styles.officeAddr, { color: t.text }]}>{OFFICE_ADDRESS}</Text>
+                <TouchableOpacity onPress={() => Linking.openURL(`mailto:${OFFICE_EMAIL}`)}>
+                  <Text style={[styles.officeAddr, { color: t.primary }]}>✉️ {OFFICE_EMAIL}</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </>

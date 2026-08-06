@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert,
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, ISSUE_CATEGORIES, SUB_CATEGORIES, PRIORITY_COLORS, PAYMENT_EXEMPT_GROUPS, PAYMENT_EXEMPT_SUBCATEGORY_LABELS, MENTAL_HEALTH_SUBCATEGORY, OFFICE_ADDRESS } from '../../constants';
+import AppText from '../../components/AppText';
+import { COLORS, ISSUE_CATEGORIES, SUB_CATEGORIES, PRIORITY_COLORS, PAYMENT_EXEMPT_GROUPS, PAYMENT_EXEMPT_SUBCATEGORY_LABELS, MENTAL_HEALTH_SUBCATEGORY, OFFICE_ADDRESS, OFFICE_EMAIL } from '../../constants';
 import { ticketAPI, paymentAPI, mediaAPI } from '../../services/api';
 import { useT } from '../../i18n';
 
@@ -24,14 +25,40 @@ export default function IssueCategoryScreen({ navigation, route }) {
   const isFeeExempt = PAYMENT_EXEMPT_GROUPS.includes(category) || PAYMENT_EXEMPT_SUBCATEGORY_LABELS.includes(subCategory);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const pickMedia = async (type) => {
+  const addPickedAssets = (result, type) => {
+    if (!result.canceled) setMedia(m => [...m, ...result.assets.map(a => ({ ...a, mediaType: type }))]);
+  };
+
+  const pickFromGallery = async (type) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return Alert.alert('Permission needed', 'Allow media access');
+    if (status !== 'granted') return Alert.alert(trCommon.error, tr.mediaPermissionNeeded || 'Allow media access');
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: type === 'photo' ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
       allowsMultipleSelection: type === 'photo', quality: 0.7,
     });
-    if (!result.canceled) setMedia(m => [...m, ...result.assets.map(a => ({ ...a, mediaType: type }))]);
+    addPickedAssets(result, type);
+  };
+
+  const captureFromCamera = async (type) => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') return Alert.alert(trCommon.error, tr.cameraPermissionNeeded || 'Allow camera access');
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: type === 'photo' ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
+      quality: 0.7,
+    });
+    addPickedAssets(result, type);
+  };
+
+  const pickMedia = (type) => {
+    Alert.alert(
+      type === 'photo' ? tr.photo : tr.video,
+      tr.chooseSource || 'Choose a source',
+      [
+        { text: tr.takePhotoLive || 'Use Camera', onPress: () => captureFromCamera(type) },
+        { text: tr.chooseFromGallery || 'Choose from Gallery', onPress: () => pickFromGallery(type) },
+        { text: trCommon.cancel || 'Cancel', style: 'cancel' },
+      ],
+    );
   };
 
   const autoLocation = async () => {
@@ -175,11 +202,11 @@ export default function IssueCategoryScreen({ navigation, route }) {
             </View>
 
             <Text style={styles.label}>{tr.priorityLabel}</Text>
-            <View style={styles.row}>
+            <View style={styles.priorityRow}>
               {['low','medium','high','critical'].map(p => (
                 <TouchableOpacity key={p} style={[styles.priorityChip, { borderColor: PRIORITY_COLORS[p] }, form.priority === p && { backgroundColor: PRIORITY_COLORS[p] }]}
                   onPress={() => set('priority', p)}>
-                  <Text style={[styles.priorityText, form.priority === p && { color: '#FFF' }]}>{tr[`priority${p.charAt(0).toUpperCase()+p.slice(1)}`]}</Text>
+                  <AppText style={[styles.priorityText, form.priority === p && { color: '#FFF' }]}>{tr[`priority${p.charAt(0).toUpperCase()+p.slice(1)}`]}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -187,10 +214,10 @@ export default function IssueCategoryScreen({ navigation, route }) {
             {isFeeExempt && <Text style={styles.noFeeAlert}>{tr.noFeeNote}</Text>}
 
             <Text style={styles.label}>{tr.attachments}</Text>
-            <View style={styles.row}>
+            <View style={styles.mediaRow}>
               <MediaBtn icon="photo-camera" label={tr.photo} onPress={() => pickMedia('photo')} />
               <MediaBtn icon="videocam"    label={tr.video} onPress={() => pickMedia('video')} />
-              <MediaBtn icon="mic"         label={tr.audio} onPress={() => Alert.alert('Coming soon')} />
+              <MediaBtn icon="mic"         label={tr.audio} onPress={() => Alert.alert(tr.audio, tr.audioComingSoon || 'Coming soon')} />
             </View>
             {media.length > 0 && <Text style={styles.mediaCount}>✅ {media.length} {tr.filesAttached}</Text>}
 
@@ -224,6 +251,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
                   <Text style={styles.refNum}>{paymentRef}</Text>
                   <Text style={styles.refInstr}>{tr.visitOffice}</Text>
                   <Text style={styles.refAddr}>📍 {OFFICE_ADDRESS}</Text>
+                  <Text style={styles.refAddr}>✉️ {OFFICE_EMAIL}</Text>
                 </View>
 
                 <View style={styles.feeInfo}>
@@ -256,7 +284,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
 const MediaBtn = ({ icon, label, onPress }) => (
   <TouchableOpacity style={styles.mediaBtn} onPress={onPress}>
     <MaterialIcons name={icon} size={22} color={COLORS.primary} />
-    <Text style={styles.mediaBtnText}>{label}</Text>
+    <AppText style={styles.mediaBtnText}>{label}</AppText>
   </TouchableOpacity>
 );
 
@@ -284,12 +312,14 @@ const styles = StyleSheet.create({
   textarea:        { height: 100, textAlignVertical: 'top' },
   row:             { flexDirection: 'row', gap: 8, marginBottom: 14, alignItems: 'center' },
   gpsBtn:          { padding: 12, backgroundColor: '#FFF', borderRadius: 10, borderWidth: 1, borderColor: COLORS.border },
-  priorityChip:    { flex: 1, borderWidth: 2, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
-  priorityText:    { fontSize: 13, fontWeight: '600', color: COLORS.text },
+  priorityRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  priorityChip:    { flexGrow: 1, flexBasis: 70, minWidth: 70, borderWidth: 2, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center' },
+  priorityText:    { fontSize: 13, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   autoAlert:       { backgroundColor: '#FFF3E0', borderRadius: 8, padding: 10, marginBottom: 14, color: COLORS.warning, fontSize: 13 },
   noFeeAlert:      { backgroundColor: '#E8F5E9', borderRadius: 8, padding: 10, marginBottom: 14, color: COLORS.success, fontSize: 13 },
-  mediaBtn:        { flex: 1, backgroundColor: '#FFF', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 4 },
-  mediaBtnText:    { fontSize: 12, color: COLORS.text },
+  mediaRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  mediaBtn:        { flexGrow: 1, flexBasis: 90, minWidth: 90, backgroundColor: '#FFF', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 4 },
+  mediaBtnText:    { fontSize: 12, color: COLORS.text, textAlign: 'center' },
   mediaCount:      { color: COLORS.success, fontSize: 13, marginBottom: 14 },
   anonRow:         { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
   anonText:        { fontSize: 13, color: COLORS.textLight, flex: 1 },
