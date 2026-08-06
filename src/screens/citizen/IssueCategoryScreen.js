@@ -172,7 +172,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
                   if (sub === MENTAL_HEALTH_SUBCATEGORY) setShowMentalHealthHelp(true);
                   else setStep(2);
                 }}>
-                <Text style={[styles.subText, subCategory === sub && styles.subTextActive]}>{trCat.subs?.[category]?.[i] || sub}</Text>
+                <AppText style={[styles.subText, subCategory === sub && styles.subTextActive]}>{trCat.subs?.[category]?.[i] || sub}</AppText>
                 <MaterialIcons name="chevron-right" size={20} color={subCategory === sub ? '#FFF' : COLORS.textLight} />
               </TouchableOpacity>
             ))}
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   catLabel:        { fontSize: 12, fontWeight: '600', textAlign: 'center' },
   subCard:         { backgroundColor: '#FFF', borderRadius: 10, padding: 14, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', elevation: 1 },
   subCardActive:   { backgroundColor: COLORS.primary },
-  subText:         { fontSize: 15, color: COLORS.text },
+  subText:         { flex: 1, flexShrink: 1, marginRight: 8, fontSize: 15, color: COLORS.text },
   subTextActive:   { color: '#FFF', fontWeight: '600' },
   label:           { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 6 },
   input:           { borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 12, fontSize: 15, backgroundColor: '#FFF', marginBottom: 14 },

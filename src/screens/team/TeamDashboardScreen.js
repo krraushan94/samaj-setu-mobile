@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS } from '../../constants';
 import { ticketAPI, paymentAPI, departmentAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import AppText from '../../components/AppText';
 
 export default function TeamDashboardScreen({ navigation }) {
   const user = useAuthStore((s) => s.user);
@@ -101,7 +102,7 @@ export default function TeamDashboardScreen({ navigation }) {
             </View>
             <Text style={styles.title} numberOfLines={2}>{t.title}</Text>
             <View style={styles.cardBottom}>
-              <Text style={styles.meta}>{t.sub_category} • Ward {t.ward || '–'}</Text>
+              <AppText style={styles.meta} numberOfLines={2}>{t.sub_category} • Ward {t.ward || '–'}</AppText>
               <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[t.status] + '22' }]}>
                 <Text style={[styles.statusText, { color: STATUS_COLORS[t.status] }]}>{STATUS_LABELS[t.status]}</Text>
               </View>
@@ -153,8 +154,8 @@ const styles = StyleSheet.create({
   badgeText:      { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
   title:          { fontSize: 15, fontWeight: '600', color: COLORS.text, paddingHorizontal: 14, marginBottom: 8 },
   cardBottom:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingBottom: 12 },
-  meta:           { fontSize: 12, color: COLORS.textLight },
-  statusBadge:    { borderRadius: 8, paddingVertical: 3, paddingHorizontal: 8 },
+  meta:           { flex: 1, flexShrink: 1, marginRight: 8, fontSize: 12, color: COLORS.textLight },
+  statusBadge:    { flexShrink: 0, borderRadius: 8, paddingVertical: 3, paddingHorizontal: 8 },
   statusText:     { fontSize: 11, fontWeight: '600' },
   modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 },
   modalCard:      { backgroundColor: '#FFF', borderRadius: 16, padding: 20 },

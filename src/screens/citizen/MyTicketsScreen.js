@@ -84,5 +84,5 @@ const styles = StyleSheet.create({
   badgeText:       { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
   title:           { fontSize: 15, fontWeight: '600', color: COLORS.text, marginBottom: 8 },
   cardBottom:      { flexDirection: 'row', alignItems: 'center' },
-  meta:            { fontSize: 12, color: COLORS.textLight },
+  meta:            { flex: 1, flexShrink: 1, fontSize: 12, color: COLORS.textLight },
 });

@@ -141,8 +141,8 @@ export default function AdminDBScreen({ navigation }) {
 const styles = StyleSheet.create({
   container:      { flex: 1, backgroundColor: COLORS.background },
   headerBar:      { backgroundColor: '#1A237E', padding: 16, paddingTop: 50 },
-  pageTitle:      { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
-  pageSub:        { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+  pageTitle:      { flex: 1, flexShrink: 1, marginRight: 8, fontSize: 20, fontWeight: 'bold', color: '#FFF' },
+  pageSub:        { flexShrink: 0, fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   grid:           { padding: 12, gap: 10 },
   restricted:     { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 },
   restrictedText: { fontSize: 14, color: COLORS.textLight, textAlign: 'center', lineHeight: 20 },
