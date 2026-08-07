@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import { useAudioRecorder, useAudioRecorderState, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
 import { MaterialIcons } from '@expo/vector-icons';
 import AppText from '../../components/AppText';
-import { COLORS, ISSUE_CATEGORIES, SUB_CATEGORIES, PRIORITY_COLORS, PAYMENT_EXEMPT_GROUPS, PAYMENT_EXEMPT_SUBCATEGORY_LABELS, MENTAL_HEALTH_SUBCATEGORY, OFFICE_ADDRESS, OFFICE_EMAIL } from '../../constants';
+import { COLORS, ISSUE_CATEGORIES, SUB_CATEGORIES, PRIORITY_COLORS, PAYMENT_EXEMPT_GROUPS, PAYMENT_EXEMPT_SUBCATEGORY_LABELS, MENTAL_HEALTH_SUBCATEGORY, OFFICE_ADDRESS, OFFICE_EMAIL, MAX_MEDIA_ATTACHMENTS } from '../../constants';
 import { ticketAPI, paymentAPI, mediaAPI } from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
 import { useT } from '../../i18n';
 
 export default function IssueCategoryScreen({ navigation, route }) {
   const tr = useT().issueForm;
+  const user = useAuthStore((s) => s.user);
   const trCat = useT().categories;
   const STEPS = [tr.stepCategory, tr.stepSubCategory, tr.stepDetails, tr.stepDone];
   const [step, setStep] = useState(0);
@@ -21,12 +24,19 @@ export default function IssueCategoryScreen({ navigation, route }) {
   const [paymentRef, setPaymentRef] = useState('');
   const [paymentRequired, setPaymentRequired] = useState(true);
   const [showMentalHealthHelp, setShowMentalHealthHelp] = useState(false);
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
 
   const isFeeExempt = PAYMENT_EXEMPT_GROUPS.includes(category) || PAYMENT_EXEMPT_SUBCATEGORY_LABELS.includes(subCategory);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const addPickedAssets = (result, type) => {
-    if (!result.canceled) setMedia(m => [...m, ...result.assets.map(a => ({ ...a, mediaType: type }))]);
+    if (result.canceled) return;
+    const room = MAX_MEDIA_ATTACHMENTS - media.length;
+    if (room <= 0) return Alert.alert(trCommon.error, tr.maxAttachmentsReached || `You can attach up to ${MAX_MEDIA_ATTACHMENTS} files per report.`);
+    const picked = result.assets.slice(0, room);
+    if (result.assets.length > room) Alert.alert(trCommon.error, tr.maxAttachmentsReached || `You can attach up to ${MAX_MEDIA_ATTACHMENTS} files per report.`);
+    setMedia(m => [...m, ...picked.map(a => ({ ...a, mediaType: type }))]);
   };
 
   const pickFromGallery = async (type) => {
@@ -34,7 +44,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
     if (status !== 'granted') return Alert.alert(trCommon.error, tr.mediaPermissionNeeded || 'Allow media access');
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: type === 'photo' ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
-      allowsMultipleSelection: type === 'photo', quality: 0.7,
+      allowsMultipleSelection: true, selectionLimit: Math.max(1, MAX_MEDIA_ATTACHMENTS - media.length), quality: 0.7,
     });
     addPickedAssets(result, type);
   };
@@ -61,6 +71,22 @@ export default function IssueCategoryScreen({ navigation, route }) {
     );
   };
 
+  const startRecording = async () => {
+    if (media.length >= MAX_MEDIA_ATTACHMENTS) {
+      return Alert.alert(trCommon.error, tr.maxAttachmentsReached || `You can attach up to ${MAX_MEDIA_ATTACHMENTS} files per report.`);
+    }
+    const { granted } = await requestRecordingPermissionsAsync();
+    if (!granted) return Alert.alert(trCommon.error, tr.microphonePermissionNeeded || 'Allow microphone access to record audio');
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+    await audioRecorder.prepareToRecordAsync();
+    audioRecorder.record();
+  };
+
+  const stopRecording = async () => {
+    await audioRecorder.stop();
+    if (audioRecorder.uri) setMedia(m => [...m, { uri: audioRecorder.uri, mediaType: 'audio' }]);
+  };
+
   const autoLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') return Alert.alert('Permission needed');
@@ -72,24 +98,35 @@ export default function IssueCategoryScreen({ navigation, route }) {
 
   const submitTicket = async () => {
     if (!form.title.trim()) return Alert.alert(trCommon.error, 'Title is required');
+    if (!form.locationText.trim()) return Alert.alert(trCommon.error, tr.locationRequired || 'Location is required — type an address or tap GPS');
     setLoading(true);
     try {
       const { data: ticket } = await ticketAPI.create({ category, subCategory, ...form });
 
-      // Upload any attached media files (non-blocking — failure doesn't abort submission)
+      // Upload any attached media files (non-blocking — failure doesn't abort submission).
+      // Grouped by mediaType since the backend stores one `type` per upload request —
+      // a mix of e.g. photos and an audio note needs one request per type.
       if (media.length > 0) {
-        const formData = new FormData();
-        formData.append('ticketId', ticket.ticketId);
-        formData.append('type', media[0].mediaType === 'video' ? 'video' : 'photo');
-        media.forEach((asset, i) => {
-          const ext = asset.uri.split('.').pop()?.toLowerCase() || (asset.mediaType === 'video' ? 'mp4' : 'jpg');
-          formData.append('files', {
-            uri:  asset.uri,
-            type: asset.mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
-            name: `attachment-${i}.${ext}`,
+        const MIME_BY_TYPE = { photo: 'image/jpeg', video: 'video/mp4', audio: 'audio/m4a' };
+        const groups = media.reduce((acc, asset) => {
+          const t = asset.mediaType || 'photo';
+          (acc[t] = acc[t] || []).push(asset);
+          return acc;
+        }, {});
+        Object.entries(groups).forEach(([type, assets]) => {
+          const formData = new FormData();
+          formData.append('ticketId', ticket.ticketId);
+          formData.append('type', type);
+          assets.forEach((asset, i) => {
+            const ext = asset.uri.split('.').pop()?.toLowerCase() || (type === 'video' ? 'mp4' : type === 'audio' ? 'm4a' : 'jpg');
+            formData.append('files', {
+              uri:  asset.uri,
+              type: MIME_BY_TYPE[type] || 'application/octet-stream',
+              name: `attachment-${i}.${ext}`,
+            });
           });
+          mediaAPI.upload(formData).catch(() => {}); // silent — ticket already created
         });
-        mediaAPI.upload(formData).catch(() => {}); // silent — ticket already created
       }
 
       // Server is the source of truth on whether this category is fee-exempt
@@ -103,6 +140,25 @@ export default function IssueCategoryScreen({ navigation, route }) {
       Alert.alert(trCommon.error, e.response?.data?.message || 'Submission failed');
     } finally { setLoading(false); }
   };
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.mhCard}>
+          <MaterialIcons name="lock-outline" size={56} color={COLORS.textLight} />
+          <Text style={styles.mhTitle}>{tr.loginRequiredTitle || 'Login required'}</Text>
+          <Text style={styles.mhBody}>{tr.loginRequiredBody || 'You can browse Samaj Setu as a guest, but you need to log in with a verified account to submit an issue report.'}</Text>
+          <TouchableOpacity style={styles.mhCallBtn} onPress={() => navigation.navigate('Login')}>
+            <MaterialIcons name="login" size={20} color="#FFF" />
+            <Text style={styles.mhCallBtnText}>{tr.goToLogin || 'Log In / Sign Up'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.mhContinueBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.mhContinueBtnText}>{tr.back}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   if (showMentalHealthHelp) {
     return (
@@ -217,9 +273,13 @@ export default function IssueCategoryScreen({ navigation, route }) {
             <View style={styles.mediaRow}>
               <MediaBtn icon="photo-camera" label={tr.photo} onPress={() => pickMedia('photo')} />
               <MediaBtn icon="videocam"    label={tr.video} onPress={() => pickMedia('video')} />
-              <MediaBtn icon="mic"         label={tr.audio} onPress={() => Alert.alert(tr.audio, tr.audioComingSoon || 'Coming soon')} />
+              <MediaBtn icon={recorderState.isRecording ? 'stop' : 'mic'} label={recorderState.isRecording ? (tr.stopRecording || 'Stop') : tr.audio}
+                onPress={recorderState.isRecording ? stopRecording : startRecording} active={recorderState.isRecording} />
             </View>
-            {media.length > 0 && <Text style={styles.mediaCount}>✅ {media.length} {tr.filesAttached}</Text>}
+            {recorderState.isRecording && (
+              <Text style={styles.recordingIndicator}>🔴 {tr.recording || 'Recording'}… {Math.round((recorderState.durationMillis || 0) / 1000)}s</Text>
+            )}
+            {media.length > 0 && <Text style={styles.mediaCount}>✅ {media.length}/{MAX_MEDIA_ATTACHMENTS} {tr.filesAttached}</Text>}
 
             <TouchableOpacity style={styles.anonRow} onPress={() => set('isAnonymous', !form.isAnonymous)}>
               <MaterialIcons name={form.isAnonymous ? 'check-box' : 'check-box-outline-blank'} size={22} color={COLORS.primary} />
@@ -281,10 +341,10 @@ export default function IssueCategoryScreen({ navigation, route }) {
   );
 }
 
-const MediaBtn = ({ icon, label, onPress }) => (
-  <TouchableOpacity style={styles.mediaBtn} onPress={onPress}>
-    <MaterialIcons name={icon} size={22} color={COLORS.primary} />
-    <AppText style={styles.mediaBtnText}>{label}</AppText>
+const MediaBtn = ({ icon, label, onPress, active }) => (
+  <TouchableOpacity style={[styles.mediaBtn, active && styles.mediaBtnActive]} onPress={onPress}>
+    <MaterialIcons name={icon} size={22} color={active ? COLORS.danger : COLORS.primary} />
+    <AppText style={[styles.mediaBtnText, active && { color: COLORS.danger }]}>{label}</AppText>
   </TouchableOpacity>
 );
 
@@ -319,7 +379,9 @@ const styles = StyleSheet.create({
   noFeeAlert:      { backgroundColor: '#E8F5E9', borderRadius: 8, padding: 10, marginBottom: 14, color: COLORS.success, fontSize: 13 },
   mediaRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   mediaBtn:        { flexGrow: 1, flexBasis: 90, minWidth: 90, backgroundColor: '#FFF', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 4 },
+  mediaBtnActive:  { backgroundColor: '#FFF3F3', borderColor: COLORS.danger },
   mediaBtnText:    { fontSize: 12, color: COLORS.text, textAlign: 'center' },
+  recordingIndicator: { color: COLORS.danger, fontSize: 13, fontWeight: '600', marginBottom: 8 },
   mediaCount:      { color: COLORS.success, fontSize: 13, marginBottom: 14 },
   anonRow:         { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
   anonText:        { fontSize: 13, color: COLORS.textLight, flex: 1 },

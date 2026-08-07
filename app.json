@@ -61,7 +61,8 @@
           "color": "#C62828",
           "sounds": []
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "runtimeVersion": {
       "policy": "appVersion"

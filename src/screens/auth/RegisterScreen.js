@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
@@ -17,9 +18,10 @@ export default function RegisterScreen({ navigation }) {
   const [step,      setStep]      = useState(STEP_OTP);
   const [loading,   setLoading]   = useState(false);
   const [tempToken, setTempToken] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
-    mobile: '', otp: '', fullName: '', email: '', gender: '',
-    ageGroup: '', pincode: '', mandal: '', ward: '', colony: '', password: '',
+    mobile: '', otp: '', firstName: '', lastName: '', email: '', gender: '',
+    ageGroup: '', pincode: '', mandal: '', ward: '', colony: '', voterIdNumber: '', password: '',
     isCaregiverSignup: false, caregiverName: '', caregiverMobile: '',
   });
 
@@ -53,7 +55,10 @@ export default function RegisterScreen({ navigation }) {
   };
 
   const complete = async () => {
-    if (!form.fullName.trim()) return Alert.alert(trCommon.error, 'Full name is required');
+    if (!form.firstName.trim() || !form.lastName.trim()) return Alert.alert(trCommon.error, 'First and last name are required');
+    if (!form.pincode.trim() || !form.ward.trim() || !form.colony.trim()) {
+      return Alert.alert(trCommon.error, 'Pincode, ward number and area/colony are required');
+    }
     setLoading(true);
     try {
       const { data } = await authAPI.register({ ...form, tempToken });
@@ -95,9 +100,15 @@ export default function RegisterScreen({ navigation }) {
       {step === STEP_PROFILE && (
         <View style={styles.card}>
           <Text style={styles.title}>{tr.profileTitle}</Text>
-          <TextInput style={styles.input} placeholder={tr.fullName} value={form.fullName} onChangeText={v => set('fullName', v)} />
+          <TextInput style={styles.input} placeholder={tr.firstName} value={form.firstName} onChangeText={v => set('firstName', v)} />
+          <TextInput style={styles.input} placeholder={tr.lastName} value={form.lastName} onChangeText={v => set('lastName', v)} />
           <TextInput style={styles.input} placeholder={tr.email} keyboardType="email-address" value={form.email} onChangeText={v => set('email', v)} />
-          <TextInput style={styles.input} placeholder={tr.password} secureTextEntry value={form.password} onChangeText={v => set('password', v)} />
+          <View style={styles.passwordRow}>
+            <TextInput style={[styles.input, styles.passwordInput]} placeholder={tr.password} secureTextEntry={!showPassword} value={form.password} onChangeText={v => set('password', v)} />
+            <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(s => !s)} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+              <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={22} color={COLORS.textLight} />
+            </TouchableOpacity>
+          </View>
           <Text style={styles.label}>{tr.gender}</Text>
           <View style={styles.row}>
             {[
@@ -139,6 +150,7 @@ export default function RegisterScreen({ navigation }) {
           <TextInput style={styles.input} placeholder={tr.mandal} value={form.mandal} onChangeText={v => set('mandal', v)} />
           <TextInput style={styles.input} placeholder={tr.ward} value={form.ward} onChangeText={v => set('ward', v)} />
           <TextInput style={styles.input} placeholder={tr.colony} value={form.colony} onChangeText={v => set('colony', v)} />
+          <TextInput style={styles.input} placeholder={tr.voterIdNumber} value={form.voterIdNumber} onChangeText={v => set('voterIdNumber', v.toUpperCase())} autoCapitalize="characters" />
           <Btn title={tr.createAccount} onPress={complete} loading={loading} />
         </View>
       )}
@@ -161,6 +173,9 @@ const styles = StyleSheet.create({
   title:        { fontSize: 22, fontWeight: 'bold', color: COLORS.text, marginBottom: 6 },
   sub:          { fontSize: 14, color: COLORS.textLight, marginBottom: 20 },
   input:        { borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 14, fontSize: 16, marginBottom: 12 },
+  passwordRow:  { position: 'relative' },
+  passwordInput:{ paddingRight: 44 },
+  eyeBtn:       { position: 'absolute', right: 12, top: 12, padding: 4 },
   otpInput:     { fontSize: 24, textAlign: 'center', letterSpacing: 8 },
   label:        { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 8 },
   row:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },

@@ -322,18 +322,27 @@ describe('HelplinesScreen', () => {
 describe('IssueCategoryScreen', () => {
   const IssueCategoryScreen = require('../src/screens/citizen/IssueCategoryScreen').default;
   const { ticketAPI, paymentAPI, mediaAPI } = require('../src/services/api');
+  const { useAuthStore } = require('../src/store/authStore');
 
-  beforeEach(() => jest.clearAllMocks());
+  // The form is gated behind login (guests can browse but not report issues) —
+  // simulate a logged-in citizen so these tests exercise the actual reporting flow.
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useAuthStore.getState().setAuth({ id: 'user-1' }, 'tok', 'refresh', 'citizen');
+  });
+  afterEach(() => useAuthStore.getState().logout());
 
   const mockRoute = { params: {} };
 
-  // Helper — navigates from step 0 → 1 → 2 via pressing category + sub-category.
+  // Helper — navigates from step 0 → 1 → 2 via pressing category + sub-category, then
+  // fills the now-mandatory location field via the (mocked) GPS button.
   // Uses "Land & Property" (not fee-exempt) so the paid flow is actually exercised —
   // "Infrastructure" is fee-exempt per PAYMENT_EXEMPT_GROUPS (see below for that flow).
   const goToDetailsStep = async () => {
     await render(<IssueCategoryScreen navigation={mockNavigation} route={mockRoute} />);
     await act(async () => { fireEvent.press(screen.getByText('Land & Property')); });
     await act(async () => { fireEvent.press(screen.getByText('Land Dispute')); });
+    await act(async () => { fireEvent.press(screen.getByLabelText('Use current GPS location')); });
   };
 
   it('renders category grid on step 0', async () => {
@@ -379,6 +388,7 @@ describe('IssueCategoryScreen', () => {
     await render(<IssueCategoryScreen navigation={mockNavigation} route={mockRoute} />);
     await act(async () => { fireEvent.press(screen.getByText('Infrastructure')); });
     await act(async () => { fireEvent.press(screen.getByText('Street Light')); });
+    await act(async () => { fireEvent.press(screen.getByLabelText('Use current GPS location')); });
     await act(async () => { fireEvent.press(screen.getByText('Submit Issue →')); });
     expect(await screen.findByText('Issue Submitted!')).toBeTruthy();
     expect(paymentAPI.initiate).not.toHaveBeenCalled();

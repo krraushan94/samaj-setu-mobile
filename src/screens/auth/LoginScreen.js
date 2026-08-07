@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
@@ -11,6 +12,7 @@ export default function LoginScreen({ navigation }) {
   const trCommon = useT().common;
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading,  setLoading]  = useState(false);
 
   const login = async () => {
@@ -40,8 +42,13 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.card}>
         <TextInput style={styles.input} placeholder={tr.placeholder}
           value={username} onChangeText={setUsername} autoCapitalize="none" />
-        <TextInput style={styles.input} placeholder={tr.password} secureTextEntry
-          value={password} onChangeText={setPassword} />
+        <View style={styles.passwordRow}>
+          <TextInput style={[styles.input, styles.passwordInput]} placeholder={tr.password} secureTextEntry={!showPassword}
+            value={password} onChangeText={setPassword} />
+          <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(s => !s)} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+            <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={22} color={COLORS.textLight} />
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity style={styles.btn} onPress={login} disabled={loading}>
           {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>{tr.loginBtn}</Text>}
         </TouchableOpacity>
@@ -69,6 +76,9 @@ const styles = StyleSheet.create({
   sub:       { fontSize: 13, color: COLORS.textLight, marginTop: 4 },
   card:      { backgroundColor: '#FFF', borderRadius: 16, padding: 24, elevation: 2 },
   input:     { borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 14, fontSize: 16, marginBottom: 14 },
+  passwordRow:  { position: 'relative' },
+  passwordInput:{ paddingRight: 44 },
+  eyeBtn:       { position: 'absolute', right: 12, top: 12, padding: 4 },
   btn:       { backgroundColor: COLORS.primary, borderRadius: 12, padding: 16, alignItems: 'center' },
   btnText:   { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   link:      { textAlign: 'center', color: COLORS.secondary, marginTop: 16, fontSize: 14 },

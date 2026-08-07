@@ -78,6 +78,9 @@ export const MENTAL_HEALTH_SUBCATEGORY = 'Mental Health Crisis';
 export const OFFICE_ADDRESS = 'Party Office, Ram Mandir, Hatiara, New Town, Kolkata – 700157';
 export const OFFICE_EMAIL = 'sanatantejas@gmail.com';
 
+// Must match the backend's multer upload.array('files', 5) cap in media.routes.js
+export const MAX_MEDIA_ATTACHMENTS = 5;
+
 export const ABOUT_GUIDANCE_NAME = 'Piyush Kanodia';
 export const ABOUT_GUIDANCE_TITLE = 'MLA, Rajarhat New Town (North 24 Parganas)';
 
