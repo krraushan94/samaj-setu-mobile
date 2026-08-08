@@ -13,7 +13,7 @@ export default function TicketDetailScreen({ navigation, route }) {
   const role = useAuthStore((s) => s.role);
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [members, setMembers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [resolutionNote, setResolutionNote] = useState('');
   const [noteText, setNoteText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -22,13 +22,13 @@ export default function TicketDetailScreen({ navigation, route }) {
 
   useEffect(() => { load(); }, [id]);
 
+  // Fetched once — the auto-routed department already has its own members, but an
+  // admin re-routing to a different department (below) needs every department's list.
   useEffect(() => {
-    if (!ticket?.department_id) return;
-    departmentAPI.list().then(({ data }) => {
-      const dept = (data.departments || []).find(d => d.id === ticket.department_id);
-      setMembers((dept?.members || []).filter(m => m && m.is_active));
-    }).catch(() => {});
-  }, [ticket?.department_id]);
+    departmentAPI.list().then(({ data }) => setDepartments(data.departments || [])).catch(() => {});
+  }, []);
+
+  const members = (departments.find(d => d.id === ticket?.department_id)?.members || []).filter(m => m && m.is_active);
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
   if (!ticket)  return <View style={styles.center}><Text>Ticket not found</Text></View>;
@@ -66,6 +66,21 @@ export default function TicketDetailScreen({ navigation, route }) {
       await load();
     } catch (e) {
       Alert.alert('Error', e.response?.data?.message || 'Could not assign ticket');
+    } finally { setBusy(false); }
+  };
+
+  // Category-based routing picks the right department automatically when a citizen
+  // reports an issue (see createTicket on the backend) — this is admin's override for
+  // when that auto-routing was wrong. Team leaders can't move a ticket to another
+  // department (server-enforced too), only reassign within their own team above.
+  const reassignDepartment = async (departmentId) => {
+    if (departmentId === ticket.department_id) return;
+    setBusy(true);
+    try {
+      await ticketAPI.assign(ticket.id, { departmentId });
+      await load();
+    } catch (e) {
+      Alert.alert('Error', e.response?.data?.message || 'Could not reassign department');
     } finally { setBusy(false); }
   };
 
@@ -164,6 +179,24 @@ export default function TicketDetailScreen({ navigation, route }) {
             onChangeText={setResolutionNote}
             multiline
           />
+
+          {role === 'admin' && departments.length > 0 && (
+            <>
+              <Text style={styles.label}>Department (auto-routed by category — change if misrouted)</Text>
+              <View style={styles.statusRow}>
+                {departments.map(d => (
+                  <TouchableOpacity
+                    key={d.id}
+                    style={[styles.assignChip, ticket.department_id === d.id && styles.assignChipActive]}
+                    disabled={busy}
+                    onPress={() => reassignDepartment(d.id)}
+                  >
+                    <Text style={[styles.assignChipText, ticket.department_id === d.id && styles.assignChipTextActive]}>{d.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
           {members.length > 0 && (
             <>

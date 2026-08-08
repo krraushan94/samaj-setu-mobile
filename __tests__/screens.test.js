@@ -29,10 +29,14 @@ jest.mock('../src/services/api', () => ({
     resetPassword:  jest.fn(),
   },
   ticketAPI: {
-    create:  jest.fn().mockResolvedValue({ data: { ticketId: 'ticket-abc-123' } }),
-    list:    jest.fn().mockResolvedValue({ data: { tickets: [] } }),
-    getById: jest.fn(),
-    upvote:  jest.fn(),
+    create:       jest.fn().mockResolvedValue({ data: { ticketId: 'ticket-abc-123' } }),
+    list:         jest.fn().mockResolvedValue({ data: { tickets: [] } }),
+    getById:      jest.fn(),
+    upvote:       jest.fn(),
+    updateStatus: jest.fn().mockResolvedValue({ data: { success: true } }),
+    assign:       jest.fn().mockResolvedValue({ data: { success: true } }),
+    addNote:      jest.fn().mockResolvedValue({ data: { success: true } }),
+    rate:         jest.fn().mockResolvedValue({ data: { success: true } }),
   },
   communityAPI: {
     getBoard: jest.fn().mockResolvedValue({ data: { issues: [] } }),
@@ -522,6 +526,52 @@ describe('AdminTeamworkScreen', () => {
     await act(async () => { fireEvent.changeText(screen.getByPlaceholderText('Title *'), 'Cross-team follow-up'); });
     await act(async () => { fireEvent.press(screen.getByText('Create')); });
     expect(teamworkAPI.createTask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Cross-team follow-up', departmentId: 'dept-uuid-1' }));
+  });
+});
+
+// ─── Ticket Detail Screen — department reassignment is admin-only ─────────────
+describe('TicketDetailScreen', () => {
+  const TicketDetailScreen = require('../src/screens/citizen/TicketDetailScreen').default;
+  const { ticketAPI, departmentAPI } = require('../src/services/api');
+  const { useAuthStore } = require('../src/store/authStore');
+  const mockRoute = { params: { id: 'ticket-1' } };
+
+  const baseTicket = {
+    id: 'ticket-1', ticket_number: 'SJT-2026-ABCDE', title: 'Pothole near market', status: 'open',
+    priority: 'medium', category: 'infrastructure', sub_category: 'Pothole', department_id: 'dept-uuid-1',
+    assigned_to: null, created_at: new Date().toISOString(), canManage: true,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    ticketAPI.getById.mockResolvedValue({ data: { ticket: baseTicket } });
+    departmentAPI.list.mockResolvedValue({ data: { departments: [
+      { id: 'dept-uuid-1', name: 'Social Welfare', members: [{ id: 'member-1', full_name: 'Member One', is_active: true }] },
+      { id: 'dept-uuid-2', name: 'Others', members: [{ id: 'member-2', full_name: 'Member Two', is_active: true }] },
+    ] } });
+  });
+  afterEach(() => useAuthStore.getState().logout());
+
+  it('leader sees "Assign To" for their own department but no department reassignment control', async () => {
+    useAuthStore.getState().setAuth({ id: 'leader-1', department_id: 'dept-uuid-1' }, 'tok', 'refresh', 'leader');
+    await render(<TicketDetailScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(await screen.findByText('Member One')).toBeTruthy();
+    expect(screen.queryByText('Others')).toBeNull();
+  });
+
+  it("admin can reassign a misrouted ticket to a different department, clearing the old assignee", async () => {
+    useAuthStore.getState().setAuth({ id: 'admin', username: 'Admin_Raushan' }, 'tok', 'refresh', 'admin');
+    await render(<TicketDetailScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(await screen.findByText('Member One')).toBeTruthy();
+    await act(async () => { fireEvent.press(screen.getByText('Others')); });
+    expect(ticketAPI.assign).toHaveBeenCalledWith('ticket-1', { departmentId: 'dept-uuid-2' });
+  });
+
+  it('citizen sees no manage section at all', async () => {
+    useAuthStore.getState().setAuth({ id: 'citizen-1' }, 'tok', 'refresh', 'citizen');
+    await render(<TicketDetailScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(await screen.findByText('Pothole near market')).toBeTruthy();
+    expect(screen.queryByText('Manage Ticket')).toBeNull();
   });
 });
 
