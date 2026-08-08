@@ -102,10 +102,9 @@ export const authAPI = {
   register:           (data) => api.post('/auth/register', data),
   login:               (data) => api.post('/auth/login', data),
   refresh:             (refreshToken) => api.post('/auth/refresh', { refreshToken }),
-  forgotAdminPassword: (username) => api.post('/auth/admin/forgot-password', { username }),
-  resetAdminPassword:  (username, code, newPassword) => api.post('/auth/admin/reset-password', { username, code, newPassword }),
-  resetCitizenPassword: (mobile, otp, newPassword) => api.post('/auth/citizen/reset-password', { mobile, otp, newPassword }),
   // Universal self-service flow — works for citizen, leader, member, and admin alike.
+  // (The old role-specific /auth/admin/* and /auth/citizen/reset-password endpoints
+  // are still used by admin-web, but the mobile app no longer calls them directly.)
   changePassword:      (data) => api.post('/auth/change-password', data),
   forgotPassword:      (identifier) => api.post('/auth/forgot-password', { identifier }),
   resetPassword:        (identifier, code, newPassword) => api.post('/auth/reset-password', { identifier, code, newPassword }),
