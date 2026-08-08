@@ -13,6 +13,7 @@ import OnboardingScreen    from '../screens/auth/OnboardingScreen';
 import WelcomeScreen       from '../screens/auth/WelcomeScreen';
 import LoginScreen         from '../screens/auth/LoginScreen';
 import AdminForgotPasswordScreen from '../screens/auth/AdminForgotPasswordScreen';
+import CitizenForgotPasswordScreen from '../screens/auth/CitizenForgotPasswordScreen';
 import RegisterScreen      from '../screens/auth/RegisterScreen';
 
 // Citizen screens
@@ -87,6 +88,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Welcome"      component={WelcomeScreen} />
         <Stack.Screen name="Login"        component={LoginScreen} options={{ headerShown: true, title: 'Login' }} />
         <Stack.Screen name="AdminForgotPassword" component={AdminForgotPasswordScreen} options={{ headerShown: true, title: 'Reset Admin Password' }} />
+        <Stack.Screen name="CitizenForgotPassword" component={CitizenForgotPasswordScreen} options={{ headerShown: true, title: 'Reset Password' }} />
         <Stack.Screen name="Register"     component={RegisterScreen} options={{ headerShown: true, title: 'Create Account' }} />
 
         {/* Citizen app */}

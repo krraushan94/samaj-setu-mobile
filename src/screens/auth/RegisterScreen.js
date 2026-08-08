@@ -21,7 +21,7 @@ export default function RegisterScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     mobile: '', otp: '', firstName: '', lastName: '', email: '', gender: '',
-    ageGroup: '', pincode: '', mandal: '', ward: '', colony: '', voterIdNumber: '', password: '',
+    ageGroup: '', pincode: '', mandal: '', ward: '', colony: '', voterIdNumber: '', aadharNumber: '', password: '',
     isCaregiverSignup: false, caregiverName: '', caregiverMobile: '',
   });
 
@@ -42,9 +42,14 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
     try {
       const { data } = await authAPI.verifyOtp(form.mobile, form.otp);
-      if (!data.isNewUser) {
-        setAuth(data.user, data.accessToken, data.refreshToken, 'citizen');
-        navigation.replace('CitizenTabs');
+      if (data.alreadyRegistered) {
+        // OTP is a one-time registration step, not a repeat login method —
+        // an already-registered mobile logs in with its password instead.
+        Alert.alert(
+          tr.alreadyRegisteredTitle || 'Already registered',
+          tr.alreadyRegisteredBody || 'This number is already registered. Please log in with your username/mobile and password.',
+          [{ text: trCommon.ok || 'OK', onPress: () => navigation.replace('Login') }],
+        );
       } else {
         setTempToken(data.tempToken);
         setStep(STEP_PROFILE);
@@ -58,6 +63,12 @@ export default function RegisterScreen({ navigation }) {
     if (!form.firstName.trim() || !form.lastName.trim()) return Alert.alert(trCommon.error, 'First and last name are required');
     if (!form.pincode.trim() || !form.ward.trim() || !form.colony.trim()) {
       return Alert.alert(trCommon.error, 'Pincode, ward number and area/colony are required');
+    }
+    if (!form.password || form.password.length < 8) {
+      return Alert.alert(trCommon.error, tr.passwordRequired || 'A password of at least 8 characters is required');
+    }
+    if (!form.aadharNumber.trim() && !form.voterIdNumber.trim()) {
+      return Alert.alert(trCommon.error, tr.idRequired || 'Aadhaar number or Voter ID is required');
     }
     setLoading(true);
     try {
@@ -150,6 +161,8 @@ export default function RegisterScreen({ navigation }) {
           <TextInput style={styles.input} placeholder={tr.mandal} value={form.mandal} onChangeText={v => set('mandal', v)} />
           <TextInput style={styles.input} placeholder={tr.ward} value={form.ward} onChangeText={v => set('ward', v)} />
           <TextInput style={styles.input} placeholder={tr.colony} value={form.colony} onChangeText={v => set('colony', v)} />
+          <Text style={styles.idNote}>{tr.idNote || 'Aadhaar number or Voter ID is required — at least one:'}</Text>
+          <TextInput style={styles.input} placeholder={tr.aadharNumber} keyboardType="number-pad" maxLength={12} value={form.aadharNumber} onChangeText={v => set('aadharNumber', v)} />
           <TextInput style={styles.input} placeholder={tr.voterIdNumber} value={form.voterIdNumber} onChangeText={v => set('voterIdNumber', v.toUpperCase())} autoCapitalize="characters" />
           <Btn title={tr.createAccount} onPress={complete} loading={loading} />
         </View>
@@ -190,4 +203,5 @@ const styles = StyleSheet.create({
   checkbox:     { width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, borderColor: COLORS.border },
   checkboxActive:{ backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   caregiverText:{ flex: 1, fontSize: 13, color: COLORS.textLight },
+  idNote:       { fontSize: 12, color: COLORS.textLight, marginBottom: 8 },
 });

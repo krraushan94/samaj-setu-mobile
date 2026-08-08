@@ -55,12 +55,13 @@ export default function LoginScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
           <Text style={styles.link}>{tr.signUp}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={[styles.link, { marginTop: 4 }]}>{tr.loginOtp}</Text>
-        </TouchableOpacity>
-        {username === 'Admin_Raushan' && (
+        {username === 'Admin_Raushan' ? (
           <TouchableOpacity onPress={() => navigation.navigate('AdminForgotPassword')}>
             <Text style={[styles.link, { marginTop: 4 }]}>Forgot admin password?</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={() => navigation.navigate('CitizenForgotPassword')}>
+            <Text style={[styles.link, { marginTop: 4 }]}>{tr.forgotPassword || 'Forgot password?'}</Text>
           </TouchableOpacity>
         )}
       </View>

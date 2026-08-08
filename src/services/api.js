@@ -104,6 +104,7 @@ export const authAPI = {
   refresh:             (refreshToken) => api.post('/auth/refresh', { refreshToken }),
   forgotAdminPassword: (username) => api.post('/auth/admin/forgot-password', { username }),
   resetAdminPassword:  (username, code, newPassword) => api.post('/auth/admin/reset-password', { username, code, newPassword }),
+  resetCitizenPassword: (mobile, otp, newPassword) => api.post('/auth/citizen/reset-password', { mobile, otp, newPassword }),
 };
 
 export const ticketAPI = {
