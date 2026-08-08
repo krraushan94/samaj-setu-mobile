@@ -188,4 +188,13 @@ export const departmentAPI = {
   addOwnMember: (data) => api.post('/departments/members', data),
 };
 
+export const teamworkAPI = {
+  listTasks:    (params) => api.get('/teamwork/tasks', { params }),
+  createTask:   (data) => api.post('/teamwork/tasks', data),
+  updateTask:   (id, data) => api.patch(`/teamwork/tasks/${id}`, data),
+  taskSummary:  () => api.get('/teamwork/tasks/summary'),
+  listMessages: (params) => api.get('/teamwork/messages', { params }),
+  postMessage:  (data) => api.post('/teamwork/messages', data),
+};
+
 export default api;

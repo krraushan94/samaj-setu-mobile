@@ -43,6 +43,17 @@ jest.mock('../src/services/api', () => ({
   mediaAPI: {
     upload: jest.fn().mockResolvedValue({ data: { success: true, uploaded: [] } }),
   },
+  departmentAPI: {
+    list: jest.fn().mockResolvedValue({ data: { departments: [] } }),
+  },
+  teamworkAPI: {
+    listTasks:    jest.fn().mockResolvedValue({ data: { tasks: [] } }),
+    createTask:   jest.fn().mockResolvedValue({ data: { task: {} } }),
+    updateTask:   jest.fn().mockResolvedValue({ data: { task: {} } }),
+    taskSummary:  jest.fn().mockResolvedValue({ data: { byStatus: [], overdueCount: 0 } }),
+    listMessages: jest.fn().mockResolvedValue({ data: { messages: [] } }),
+    postMessage:  jest.fn().mockResolvedValue({ data: { message: {} } }),
+  },
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -418,6 +429,96 @@ describe('IssueCategoryScreen', () => {
       expect(ticketAPI.create).not.toHaveBeenCalled();
       alertSpy.mockRestore();
     });
+  });
+});
+
+// ─── Team Workspace Screen (Tasks + Chat) ──────────────────────────────────────
+describe('TeamWorkspaceScreen', () => {
+  const TeamWorkspaceScreen = require('../src/screens/team/TeamWorkspaceScreen').default;
+  const { teamworkAPI, departmentAPI } = require('../src/services/api');
+  const { useAuthStore } = require('../src/store/authStore');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    departmentAPI.list.mockResolvedValue({ data: { departments: [
+      { id: 'dept-uuid-1', name: 'Social Welfare', members: [{ id: 'member-2', full_name: 'Other Member', is_active: true }] },
+    ] } });
+  });
+  afterEach(() => useAuthStore.getState().logout());
+
+  it('leader sees the "New Task" button; member does not', async () => {
+    useAuthStore.getState().setAuth({ id: 'leader-1', department_id: 'dept-uuid-1' }, 'tok', 'refresh', 'leader');
+    const { queryByText } = await render(<TeamWorkspaceScreen navigation={mockNavigation} />);
+    expect(await screen.findByText('New Task')).toBeTruthy();
+    useAuthStore.getState().logout();
+
+    useAuthStore.getState().setAuth({ id: 'member-1', department_id: 'dept-uuid-1' }, 'tok', 'refresh', 'member');
+    await render(<TeamWorkspaceScreen navigation={mockNavigation} />);
+    await waitFor(() => expect(teamworkAPI.listTasks).toHaveBeenCalled());
+    expect(screen.queryByText('New Task')).toBeNull();
+  }, 15000);
+
+  it('scopes task list to the logged-in team member\'s own department', async () => {
+    useAuthStore.getState().setAuth({ id: 'leader-1', department_id: 'dept-uuid-1' }, 'tok', 'refresh', 'leader');
+    await render(<TeamWorkspaceScreen navigation={mockNavigation} />);
+    await waitFor(() => expect(teamworkAPI.listTasks).toHaveBeenCalledWith({ departmentId: 'dept-uuid-1' }));
+  });
+
+  it('switches to the Team Chat tab and sends a message', async () => {
+    useAuthStore.getState().setAuth({ id: 'leader-1', department_id: 'dept-uuid-1' }, 'tok', 'refresh', 'leader');
+    await render(<TeamWorkspaceScreen navigation={mockNavigation} />);
+    await act(async () => { fireEvent.press(screen.getByText('Team Chat')); });
+    await waitFor(() => expect(teamworkAPI.listMessages).toHaveBeenCalledWith({ departmentId: 'dept-uuid-1' }));
+    await act(async () => { fireEvent.changeText(screen.getByPlaceholderText('Message your team…'), 'Hello team'); });
+    await act(async () => { fireEvent.press(screen.getByTestId('send-message-btn')); });
+    expect(teamworkAPI.postMessage).toHaveBeenCalledWith({ departmentId: 'dept-uuid-1', message: 'Hello team' });
+  });
+});
+
+// ─── Admin Teamwork Screen (cross-department overview) ─────────────────────────
+describe('AdminTeamworkScreen', () => {
+  const AdminTeamworkScreen = require('../src/screens/admin/AdminTeamworkScreen').default;
+  const { teamworkAPI, departmentAPI } = require('../src/services/api');
+  const { useAuthStore } = require('../src/store/authStore');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useAuthStore.getState().setAuth({ id: 'admin', username: 'Admin_Raushan' }, 'tok', 'refresh', 'admin');
+    departmentAPI.list.mockResolvedValue({ data: { departments: [
+      { id: 'dept-uuid-1', name: 'Social Welfare', members: [] },
+      { id: 'dept-uuid-2', name: 'Politics', members: [] },
+    ] } });
+    teamworkAPI.taskSummary.mockResolvedValue({ data: {
+      byStatus: [{ department_name: 'Social Welfare', status: 'pending', count: '3' }],
+      overdueCount: 2,
+    } });
+  });
+  afterEach(() => useAuthStore.getState().logout());
+
+  it('shows the cross-department overview by default', async () => {
+    await render(<AdminTeamworkScreen navigation={mockNavigation} />);
+    expect(await screen.findByText('Social Welfare')).toBeTruthy();
+    expect(await screen.findByText('pending: 3')).toBeTruthy();
+    expect(await screen.findByText('2')).toBeTruthy(); // overdue count
+  });
+
+  it('lets admin pick a department and view its tasks', async () => {
+    await render(<AdminTeamworkScreen navigation={mockNavigation} />);
+    await act(async () => { fireEvent.press(screen.getByText('Tasks')); });
+    expect(await screen.findByText('Politics')).toBeTruthy();
+    await act(async () => { fireEvent.press(screen.getByText('Politics')); });
+    await waitFor(() => expect(teamworkAPI.listTasks).toHaveBeenCalledWith({ departmentId: 'dept-uuid-2' }));
+  });
+
+  it('admin can create a task for the selected department', async () => {
+    await render(<AdminTeamworkScreen navigation={mockNavigation} />);
+    await act(async () => { fireEvent.press(screen.getByText('Tasks')); });
+    await act(async () => { fireEvent.press(screen.getByText('Social Welfare')); });
+    await waitFor(() => expect(teamworkAPI.listTasks).toHaveBeenCalled());
+    await act(async () => { fireEvent.press(screen.getByText('New Task')); });
+    await act(async () => { fireEvent.changeText(screen.getByPlaceholderText('Title *'), 'Cross-team follow-up'); });
+    await act(async () => { fireEvent.press(screen.getByText('Create')); });
+    expect(teamworkAPI.createTask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Cross-team follow-up', departmentId: 'dept-uuid-1' }));
   });
 });
 

@@ -7,6 +7,7 @@ import { notificationAPI } from '../../services/api';
 const TYPE_ICONS = {
   sos: 'emergency', ticket_assigned: 'assignment-ind', ticket_status: 'confirmation-number',
   office_visit: 'event-available', announcement: 'campaign',
+  task_assigned: 'add-task', task_status: 'fact-check',
 };
 
 export default function NotificationsScreen() {

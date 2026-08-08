@@ -28,6 +28,7 @@ import OfficeVisitScreen from '../screens/citizen/OfficeVisitScreen';
 import NotificationsScreen from '../screens/citizen/NotificationsScreen';
 import AdminVisitsScreen from '../screens/admin/AdminVisitsScreen';
 import AdminUsersScreen from '../screens/admin/AdminUsersScreen';
+import AdminTeamworkScreen from '../screens/admin/AdminTeamworkScreen';
 
 // Community screens
 import CommunityBoardScreen from '../screens/community/CommunityBoardScreen';
@@ -44,6 +45,7 @@ import AdminManageAdminsScreen from '../screens/admin/AdminManageAdminsScreen';
 
 // Team screens
 import TeamDashboardScreen  from '../screens/team/TeamDashboardScreen';
+import TeamWorkspaceScreen  from '../screens/team/TeamWorkspaceScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -76,6 +78,7 @@ function TeamTabs() {
     <Tab.Navigator screenOptions={{ headerShown: false, tabBarActiveTintColor: '#00695C', tabBarStyle: { paddingBottom: 4 } }}>
       <Tab.Screen name="TeamDashboard"    component={TeamDashboardScreen}  options={{ title: 'Dashboard', tabBarIcon: tabBarIcon('dashboard') }} />
       <Tab.Screen name="TeamTickets"      component={MyTicketsScreen}      options={{ title: 'Tickets',   tabBarIcon: tabBarIcon('list-alt') }} />
+      <Tab.Screen name="TeamWorkspace"    component={TeamWorkspaceScreen}  options={{ title: 'Workspace', tabBarIcon: tabBarIcon('assignment') }} />
       <Tab.Screen name="TeamTicketDetail" component={TicketDetailScreen}   options={{ title: 'Detail',    tabBarIcon: tabBarIcon('info'), tabBarButton: () => null }} />
     </Tab.Navigator>
   );
@@ -117,6 +120,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AdminManageAdmins" component={AdminManageAdminsScreen} options={{ headerShown: true, title: '🛡️ Manage Admins' }} />
         <Stack.Screen name="AdminVisits" component={AdminVisitsScreen} options={{ headerShown: true, title: '🏢 Office Visits' }} />
         <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ headerShown: true, title: '👥 Manage Users' }} />
+        <Stack.Screen name="AdminTeamwork" component={AdminTeamworkScreen} options={{ headerShown: true, title: '📋 Team Tasks & Chat' }} />
 
         {/* Team app */}
         <Stack.Screen name="TeamTabs"        component={TeamTabs} />

@@ -74,6 +74,7 @@ export default function AdminDashboardScreen({ navigation }) {
             { icon: 'flag',          label: 'Reported Posts',  screen: 'AdminReportedPosts' },
             { icon: 'event-available', label: 'Office Visits', screen: 'AdminVisits' },
             { icon: 'people',        label: 'Manage Users',    screen: 'AdminUsers' },
+            { icon: 'assignment',   label: 'Team Tasks & Chat', screen: 'AdminTeamwork' },
             { icon: 'storage',       label: 'Database',        screen: 'AdminDB' },
             ...(isPrimaryAdmin ? [{ icon: 'admin-panel-settings', label: 'Manage Admins', screen: 'AdminManageAdmins' }] : []),
           ].map(a => (
