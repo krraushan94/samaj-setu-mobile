@@ -99,6 +99,16 @@ export default function IssueCategoryScreen({ navigation, route }) {
   const submitTicket = async () => {
     if (!form.title.trim()) return Alert.alert(trCommon.error, 'Title is required');
     if (!form.locationText.trim()) return Alert.alert(trCommon.error, tr.locationRequired || 'Location is required — type an address or tap GPS');
+    if (!user) {
+      return Alert.alert(
+        tr.loginRequiredTitle || 'Login required',
+        tr.loginRequiredBody || 'You can browse Samaj Setu as a guest, but you need to log in with a verified account to submit an issue report.',
+        [
+          { text: trCommon.cancel || 'Cancel', style: 'cancel' },
+          { text: tr.goToLogin || 'Log In / Sign Up', onPress: () => navigation.navigate('Login') },
+        ],
+      );
+    }
     setLoading(true);
     try {
       const { data: ticket } = await ticketAPI.create({ category, subCategory, ...form });
@@ -140,25 +150,6 @@ export default function IssueCategoryScreen({ navigation, route }) {
       Alert.alert(trCommon.error, e.response?.data?.message || 'Submission failed');
     } finally { setLoading(false); }
   };
-
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.mhCard}>
-          <MaterialIcons name="lock-outline" size={56} color={COLORS.textLight} />
-          <Text style={styles.mhTitle}>{tr.loginRequiredTitle || 'Login required'}</Text>
-          <Text style={styles.mhBody}>{tr.loginRequiredBody || 'You can browse Samaj Setu as a guest, but you need to log in with a verified account to submit an issue report.'}</Text>
-          <TouchableOpacity style={styles.mhCallBtn} onPress={() => navigation.navigate('Login')}>
-            <MaterialIcons name="login" size={20} color="#FFF" />
-            <Text style={styles.mhCallBtnText}>{tr.goToLogin || 'Log In / Sign Up'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.mhContinueBtn} onPress={() => navigation.goBack()}>
-            <Text style={styles.mhContinueBtnText}>{tr.back}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
 
   if (showMentalHealthHelp) {
     return (

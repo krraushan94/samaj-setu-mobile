@@ -23,7 +23,11 @@ export default function WelcomeScreen({ navigation }) {
         <TouchableOpacity style={styles.btnSecondary} onPress={() => navigation.navigate('Login')}>
           <Text style={styles.btnSecondaryText}>{tr.login}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('CitizenTabs')}>
+        <TouchableOpacity
+          style={styles.guestBtn}
+          onPress={() => navigation.replace('CitizenTabs')}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <Text style={styles.guestText}>{tr.browseAsGuest}</Text>
         </TouchableOpacity>
       </View>
@@ -43,5 +47,6 @@ const styles = StyleSheet.create({
   btnPrimaryText:  { color: COLORS.primary, fontSize: 16, fontWeight: 'bold' },
   btnSecondary:    { borderWidth: 2, borderColor: '#FFF', borderRadius: 30, paddingVertical: 14, width: '100%', alignItems: 'center' },
   btnSecondaryText:{ color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  guestText:       { color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 8 },
+  guestBtn:        { marginTop: 8, paddingVertical: 10, paddingHorizontal: 16 },
+  guestText:       { color: 'rgba(255,255,255,0.75)', fontSize: 14 },
 });

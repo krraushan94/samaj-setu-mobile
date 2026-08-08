@@ -324,8 +324,9 @@ describe('IssueCategoryScreen', () => {
   const { ticketAPI, paymentAPI, mediaAPI } = require('../src/services/api');
   const { useAuthStore } = require('../src/store/authStore');
 
-  // The form is gated behind login (guests can browse but not report issues) —
-  // simulate a logged-in citizen so these tests exercise the actual reporting flow.
+  // Only the final submit is gated behind login (guests can browse the whole
+  // form freely) — simulate a logged-in citizen for these submit-flow tests;
+  // the guest-can-browse-but-not-submit behavior itself is covered separately below.
   beforeEach(() => {
     jest.clearAllMocks();
     useAuthStore.getState().setAuth({ id: 'user-1' }, 'tok', 'refresh', 'citizen');
@@ -392,6 +393,31 @@ describe('IssueCategoryScreen', () => {
     await act(async () => { fireEvent.press(screen.getByText('Submit Issue →')); });
     expect(await screen.findByText('Issue Submitted!')).toBeTruthy();
     expect(paymentAPI.initiate).not.toHaveBeenCalled();
+  });
+
+  describe('as a guest (no logged-in account)', () => {
+    beforeEach(() => useAuthStore.getState().logout());
+
+    it('can browse category and sub-category selection freely', async () => {
+      await render(<IssueCategoryScreen navigation={mockNavigation} route={mockRoute} />);
+      await act(async () => { fireEvent.press(screen.getByText('Infrastructure')); });
+      expect(await screen.findByText('Street Light')).toBeTruthy();
+      await act(async () => { fireEvent.press(screen.getByText('Street Light')); });
+      // Reaches the Details step (title/description/location/attachments) same as a logged-in user
+      expect(await screen.findByText('Issue Details')).toBeTruthy();
+    });
+
+    it('blocks only the final submit and never calls ticketAPI.create', async () => {
+      const alertSpy = jest.spyOn(require('react-native').Alert, 'alert');
+      await render(<IssueCategoryScreen navigation={mockNavigation} route={mockRoute} />);
+      await act(async () => { fireEvent.press(screen.getByText('Land & Property')); });
+      await act(async () => { fireEvent.press(screen.getByText('Land Dispute')); });
+      await act(async () => { fireEvent.press(screen.getByLabelText('Use current GPS location')); });
+      await act(async () => { fireEvent.press(screen.getByText('Proceed to Payment →')); });
+      expect(alertSpy).toHaveBeenCalledWith('Login required', expect.any(String), expect.any(Array));
+      expect(ticketAPI.create).not.toHaveBeenCalled();
+      alertSpy.mockRestore();
+    });
   });
 });
 
