@@ -69,6 +69,7 @@ export default function AdminDashboardScreen({ navigation }) {
             { icon: 'list-alt',      label: 'All Tickets',     screen: 'AdminTickets' },
             { icon: 'people',        label: 'Teams',           screen: 'AdminTeams' },
             { icon: 'flag',          label: 'Reported Posts',  screen: 'AdminReportedPosts' },
+            { icon: 'event-available', label: 'Office Visits', screen: 'AdminVisits' },
             { icon: 'storage',       label: 'Database',        screen: 'AdminDB' },
             ...(isPrimaryAdmin ? [{ icon: 'admin-panel-settings', label: 'Manage Admins', screen: 'AdminManageAdmins' }] : []),
           ].map(a => (

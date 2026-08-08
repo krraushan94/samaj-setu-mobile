@@ -97,6 +97,7 @@ export default function HomeScreen({ navigation }) {
             { icon: 'event',         label: tr.events,         screen: 'Events' },
             { icon: 'person-search', label: tr.missing,        screen: 'Missing' },
             { icon: 'phone',         label: tr.helplines,      screen: 'Helplines' },
+            { icon: 'event-available', label: tr.visitOfficeLink || 'Visit Office', screen: 'OfficeVisit' },
             { icon: 'info',          label: tr.aboutUs,        screen: 'About' },
             { icon: 'settings',      label: tr.settings,       screen: 'AccessibilitySettings' },
           ].map(q => (

@@ -171,6 +171,14 @@ export const userAPI = {
   block:  (id, blocked) => api.patch(`/users/${id}/block`, { blocked }),
 };
 
+export const visitAPI = {
+  create:   (data) => api.post('/visits', data),
+  myVisits: () => api.get('/visits/my'),
+  cancel:   (id) => api.patch(`/visits/${id}/cancel`),
+  list:     (params) => api.get('/visits', { params }),
+  schedule: (id, data) => api.patch(`/visits/${id}/schedule`, data),
+};
+
 export const departmentAPI = {
   list:         () => api.get('/departments'),
   addMember:    (deptId, data) => api.post(`/departments/${deptId}/members`, data),

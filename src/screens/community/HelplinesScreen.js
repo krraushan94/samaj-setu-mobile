@@ -24,7 +24,7 @@ const ALL_HELPLINES = [
   { label: 'Mental Health (Tele-MANAS)', number: '14416', icon: 'psychology',          color: '#00695C' },
 ];
 
-export default function HelplinesScreen() {
+export default function HelplinesScreen({ navigation }) {
   const t   = useTheme();
   const tr  = useT().helplines;
   const trCommon = useT().common;
@@ -192,6 +192,10 @@ export default function HelplinesScreen() {
                 <TouchableOpacity onPress={() => Linking.openURL(`mailto:${OFFICE_EMAIL}`)}>
                   <Text style={[styles.officeAddr, { color: t.primary }]}>✉️ {OFFICE_EMAIL}</Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={[styles.visitBtn, { backgroundColor: t.primary }]} onPress={() => navigation?.navigate('OfficeVisit')}>
+                  <MaterialIcons name="event-available" size={16} color="#FFF" />
+                  <Text style={styles.visitBtnText}>Request a Visit</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </>
@@ -234,4 +238,6 @@ const styles = StyleSheet.create({
   officeTitle:   { fontSize: 15, fontWeight: '700' },
   officeSub:     { fontSize: 12, marginTop: 2, marginBottom: 6 },
   officeAddr:    { fontSize: 13, lineHeight: 19 },
+  visitBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, marginTop: 8, alignSelf: 'flex-start' },
+  visitBtnText:  { color: '#FFF', fontSize: 12, fontWeight: '700' },
 });
