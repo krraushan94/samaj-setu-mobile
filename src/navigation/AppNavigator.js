@@ -25,7 +25,9 @@ import TicketDetailScreen  from '../screens/citizen/TicketDetailScreen';
 import AccessibilitySettingsScreen from '../screens/citizen/AccessibilitySettingsScreen';
 import AboutScreen from '../screens/citizen/AboutScreen';
 import OfficeVisitScreen from '../screens/citizen/OfficeVisitScreen';
+import NotificationsScreen from '../screens/citizen/NotificationsScreen';
 import AdminVisitsScreen from '../screens/admin/AdminVisitsScreen';
+import AdminUsersScreen from '../screens/admin/AdminUsersScreen';
 
 // Community screens
 import CommunityBoardScreen from '../screens/community/CommunityBoardScreen';
@@ -105,6 +107,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} options={{ headerShown: true, title: 'Settings' }} />
         <Stack.Screen name="About" component={AboutScreen} options={{ headerShown: true, title: 'About Us' }} />
         <Stack.Screen name="OfficeVisit" component={OfficeVisitScreen} options={{ headerShown: true, title: 'Visit the Office' }} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
 
         {/* Admin app */}
         <Stack.Screen name="AdminTabs" component={AdminTabs} />
@@ -113,6 +116,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AdminReportedPosts" component={AdminReportedPostsScreen} options={{ headerShown: true, title: '🚩 Reported Posts' }} />
         <Stack.Screen name="AdminManageAdmins" component={AdminManageAdminsScreen} options={{ headerShown: true, title: '🛡️ Manage Admins' }} />
         <Stack.Screen name="AdminVisits" component={AdminVisitsScreen} options={{ headerShown: true, title: '🏢 Office Visits' }} />
+        <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ headerShown: true, title: '👥 Manage Users' }} />
 
         {/* Team app */}
         <Stack.Screen name="TeamTabs"        component={TeamTabs} />

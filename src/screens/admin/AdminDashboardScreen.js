@@ -35,6 +35,9 @@ export default function AdminDashboardScreen({ navigation }) {
             <Text style={styles.headerSub}>RAM Mandir New Town Hatiara Office</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 16 }}>
+            <TouchableOpacity onPress={() => navigation.navigate('Notifications')} accessibilityLabel="Notifications">
+              <MaterialIcons name="notifications" size={24} color="#FFF" />
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('AccessibilitySettings')} accessibilityLabel="Settings">
               <MaterialIcons name="settings" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -70,6 +73,7 @@ export default function AdminDashboardScreen({ navigation }) {
             { icon: 'people',        label: 'Teams',           screen: 'AdminTeams' },
             { icon: 'flag',          label: 'Reported Posts',  screen: 'AdminReportedPosts' },
             { icon: 'event-available', label: 'Office Visits', screen: 'AdminVisits' },
+            { icon: 'people',        label: 'Manage Users',    screen: 'AdminUsers' },
             { icon: 'storage',       label: 'Database',        screen: 'AdminDB' },
             ...(isPrimaryAdmin ? [{ icon: 'admin-panel-settings', label: 'Manage Admins', screen: 'AdminManageAdmins' }] : []),
           ].map(a => (

@@ -60,6 +60,9 @@ export default function TeamDashboardScreen({ navigation }) {
                 <MaterialIcons name="person-add" size={22} color="#FFF" />
               </TouchableOpacity>
             )}
+            <TouchableOpacity onPress={() => navigation.navigate('Notifications')} accessibilityLabel="Notifications">
+              <MaterialIcons name="notifications" size={22} color="#FFF" />
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('AccessibilitySettings')} accessibilityLabel="Settings">
               <MaterialIcons name="settings" size={22} color="#FFF" />
             </TouchableOpacity>
