@@ -5,37 +5,42 @@ import { COLORS } from '../../constants';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 
-// Self-service password reset for citizens — an OTP is sent to their mobile.
-// This is the ONLY place OTP is used again after initial registration, and
-// only when someone genuinely forgot their password, not as a routine login
-// method (each OTP costs real SMS credit).
-export default function CitizenForgotPasswordScreen({ navigation }) {
+// Universal forgot-password — works for citizens, team leaders/members, and admin
+// alike. The identifier can be a mobile number (OTP, same SMS path as registration)
+// or an email address (a code emailed to that address) — auto-detected, and the
+// server itself figures out which account (if any) actually matches it.
+export default function ForgotPasswordScreen({ navigation }) {
   const setAuth = useAuthStore((s) => s.setAuth);
   const [step, setStep] = useState('request'); // request | reset
-  const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const requestOtp = async () => {
-    if (!/^\d{10}$/.test(mobile)) return Alert.alert('Error', 'Enter a valid 10-digit mobile number');
+  const isMobile = /^\d{10}$/.test(identifier.trim());
+  const isEmail = /^\S+@\S+\.\S+$/.test(identifier.trim());
+
+  const requestCode = async () => {
+    if (!isMobile && !isEmail) return Alert.alert('Error', 'Enter a valid 10-digit mobile number or email address');
     setLoading(true);
     try {
-      await authAPI.sendOtp(mobile);
+      await authAPI.forgotPassword(identifier.trim());
       setStep('reset');
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message || 'Failed to send OTP');
+      Alert.alert('Error', e.response?.data?.message || 'Something went wrong');
     } finally { setLoading(false); }
   };
 
   const resetPassword = async () => {
-    if (!otp || !newPassword) return Alert.alert('Error', 'Enter the OTP and a new password');
+    if (!code || !newPassword) return Alert.alert('Error', 'Enter the code and a new password');
     if (newPassword.length < 8) return Alert.alert('Error', 'Password must be at least 8 characters');
     setLoading(true);
     try {
-      const { data } = await authAPI.resetCitizenPassword(mobile, otp, newPassword);
-      setAuth(data.user, data.accessToken, data.refreshToken, 'citizen');
+      const { data } = await authAPI.resetPassword(identifier.trim(), code, newPassword);
+      setAuth(data.user || data.member || { username: data.role }, data.accessToken, data.refreshToken, data.role);
+      if (data.role === 'admin') return navigation.replace('AdminTabs');
+      if (data.role === 'leader' || data.role === 'member') return navigation.replace('TeamTabs');
       navigation.replace('CitizenTabs');
     } catch (e) {
       Alert.alert('Error', e.response?.data?.message || 'Could not reset password');
@@ -47,19 +52,20 @@ export default function CitizenForgotPasswordScreen({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.emoji}>🔑</Text>
         <Text style={styles.title}>Forgot Password</Text>
-        <Text style={styles.sub}>{step === 'request' ? 'An OTP will be sent to your registered mobile number' : 'Enter the OTP and a new password'}</Text>
+        <Text style={styles.sub}>{step === 'request' ? 'A code will be sent to your mobile or email' : 'Enter the code and a new password'}</Text>
       </View>
       <View style={styles.card}>
         {step === 'request' ? (
           <>
-            <TextInput style={styles.input} placeholder="+91 Mobile Number" keyboardType="phone-pad" maxLength={10} value={mobile} onChangeText={setMobile} />
-            <TouchableOpacity style={styles.btn} onPress={requestOtp} disabled={loading}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Send OTP</Text>}
+            <TextInput style={styles.input} placeholder="Mobile number or email" autoCapitalize="none" keyboardType="email-address"
+              value={identifier} onChangeText={setIdentifier} />
+            <TouchableOpacity style={styles.btn} onPress={requestCode} disabled={loading}>
+              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Send Code</Text>}
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <TextInput style={[styles.input, styles.otpInput]} placeholder="6-digit OTP" keyboardType="number-pad" maxLength={6} value={otp} onChangeText={setOtp} />
+            <TextInput style={[styles.input, styles.codeInput]} placeholder="6-digit code" keyboardType="number-pad" maxLength={6} value={code} onChangeText={setCode} />
             <View style={styles.passwordRow}>
               <TextInput style={[styles.input, styles.passwordInput]} placeholder="New password (8+ characters)" secureTextEntry={!showPassword} value={newPassword} onChangeText={setNewPassword} />
               <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(s => !s)} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
@@ -69,8 +75,8 @@ export default function CitizenForgotPasswordScreen({ navigation }) {
             <TouchableOpacity style={styles.btn} onPress={resetPassword} disabled={loading}>
               {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Reset Password</Text>}
             </TouchableOpacity>
-            <TouchableOpacity onPress={requestOtp}>
-              <Text style={styles.link}>Resend OTP</Text>
+            <TouchableOpacity onPress={requestCode}>
+              <Text style={styles.link}>Resend code</Text>
             </TouchableOpacity>
           </>
         )}
@@ -90,7 +96,7 @@ const styles = StyleSheet.create({
   sub:       { fontSize: 13, color: COLORS.textLight, marginTop: 4, textAlign: 'center' },
   card:      { backgroundColor: '#FFF', borderRadius: 16, padding: 24, elevation: 2 },
   input:     { borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 14, fontSize: 16, marginBottom: 14 },
-  otpInput:  { fontSize: 24, textAlign: 'center', letterSpacing: 8 },
+  codeInput: { fontSize: 24, textAlign: 'center', letterSpacing: 8 },
   passwordRow:  { position: 'relative' },
   passwordInput:{ paddingRight: 44 },
   eyeBtn:       { position: 'absolute', right: 12, top: 12, padding: 4 },

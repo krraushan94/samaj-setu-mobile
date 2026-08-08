@@ -12,8 +12,7 @@ import LanguageScreen      from '../screens/auth/LanguageScreen';
 import OnboardingScreen    from '../screens/auth/OnboardingScreen';
 import WelcomeScreen       from '../screens/auth/WelcomeScreen';
 import LoginScreen         from '../screens/auth/LoginScreen';
-import AdminForgotPasswordScreen from '../screens/auth/AdminForgotPasswordScreen';
-import CitizenForgotPasswordScreen from '../screens/auth/CitizenForgotPasswordScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import RegisterScreen      from '../screens/auth/RegisterScreen';
 
 // Citizen screens
@@ -23,6 +22,7 @@ import SOSScreen from '../screens/citizen/SOSScreen';
 import MyTicketsScreen     from '../screens/citizen/MyTicketsScreen';
 import TicketDetailScreen  from '../screens/citizen/TicketDetailScreen';
 import AccessibilitySettingsScreen from '../screens/citizen/AccessibilitySettingsScreen';
+import ChangePasswordScreen from '../screens/citizen/ChangePasswordScreen';
 import AboutScreen from '../screens/citizen/AboutScreen';
 import OfficeVisitScreen from '../screens/citizen/OfficeVisitScreen';
 import NotificationsScreen from '../screens/citizen/NotificationsScreen';
@@ -46,6 +46,7 @@ import AdminManageAdminsScreen from '../screens/admin/AdminManageAdminsScreen';
 // Team screens
 import TeamDashboardScreen  from '../screens/team/TeamDashboardScreen';
 import TeamWorkspaceScreen  from '../screens/team/TeamWorkspaceScreen';
+import CompleteTeamAccountScreen from '../screens/team/CompleteTeamAccountScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -94,8 +95,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Onboarding"   component={OnboardingScreen} />
         <Stack.Screen name="Welcome"      component={WelcomeScreen} />
         <Stack.Screen name="Login"        component={LoginScreen} options={{ headerShown: true, title: 'Login' }} />
-        <Stack.Screen name="AdminForgotPassword" component={AdminForgotPasswordScreen} options={{ headerShown: true, title: 'Reset Admin Password' }} />
-        <Stack.Screen name="CitizenForgotPassword" component={CitizenForgotPasswordScreen} options={{ headerShown: true, title: 'Reset Password' }} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: true, title: 'Reset Password' }} />
         <Stack.Screen name="Register"     component={RegisterScreen} options={{ headerShown: true, title: 'Create Account' }} />
 
         {/* Citizen app */}
@@ -108,6 +108,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Helplines"      component={HelplinesScreen}    options={{ headerShown: true, title: 'Emergency Helplines' }} />
         <Stack.Screen name="SOS"            component={SOSScreen}          options={{ headerShown: true, title: '🚨 SOS Emergency', headerLeft: () => null, gestureEnabled: false }} />
         <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} options={{ headerShown: true, title: 'Settings' }} />
+        <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ headerShown: true, title: 'Change Password' }} />
         <Stack.Screen name="About" component={AboutScreen} options={{ headerShown: true, title: 'About Us' }} />
         <Stack.Screen name="OfficeVisit" component={OfficeVisitScreen} options={{ headerShown: true, title: 'Visit the Office' }} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
@@ -125,6 +126,7 @@ export default function AppNavigator() {
         {/* Team app */}
         <Stack.Screen name="TeamTabs"        component={TeamTabs} />
         <Stack.Screen name="TeamTicketDetail"component={TicketDetailScreen} options={{ headerShown: true, title: 'Ticket Detail' }} />
+        <Stack.Screen name="CompleteTeamAccount" component={CompleteTeamAccountScreen} options={{ headerShown: true, title: 'Set Up Your Account', headerLeft: () => null, gestureEnabled: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

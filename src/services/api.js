@@ -105,6 +105,10 @@ export const authAPI = {
   forgotAdminPassword: (username) => api.post('/auth/admin/forgot-password', { username }),
   resetAdminPassword:  (username, code, newPassword) => api.post('/auth/admin/reset-password', { username, code, newPassword }),
   resetCitizenPassword: (mobile, otp, newPassword) => api.post('/auth/citizen/reset-password', { mobile, otp, newPassword }),
+  // Universal self-service flow — works for citizen, leader, member, and admin alike.
+  changePassword:      (data) => api.post('/auth/change-password', data),
+  forgotPassword:      (identifier) => api.post('/auth/forgot-password', { identifier }),
+  resetPassword:        (identifier, code, newPassword) => api.post('/auth/reset-password', { identifier, code, newPassword }),
 };
 
 export const ticketAPI = {

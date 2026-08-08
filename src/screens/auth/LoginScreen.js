@@ -25,7 +25,12 @@ export default function LoginScreen({ navigation }) {
       setAuth(data.user || data.member || { username }, data.accessToken, data.refreshToken, data.role);
 
       if (data.role === 'admin') return navigation.replace('AdminTabs');
-      if (data.role === 'leader' || data.role === 'member') return navigation.replace('TeamTabs');
+      if (data.role === 'leader' || data.role === 'member') {
+        // First login on an admin-issued password — force setting their own password
+        // + contact details before they can use the app (see CompleteTeamAccountScreen).
+        if (!data.member?.password_set_at) return navigation.replace('CompleteTeamAccount');
+        return navigation.replace('TeamTabs');
+      }
       navigation.replace('CitizenTabs');
     } catch (e) {
       Alert.alert('Login Failed', e.response?.data?.message || 'Invalid credentials');
@@ -55,15 +60,9 @@ export default function LoginScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
           <Text style={styles.link}>{tr.signUp}</Text>
         </TouchableOpacity>
-        {username === 'Admin_Raushan' ? (
-          <TouchableOpacity onPress={() => navigation.navigate('AdminForgotPassword')}>
-            <Text style={[styles.link, { marginTop: 4 }]}>Forgot admin password?</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={() => navigation.navigate('CitizenForgotPassword')}>
-            <Text style={[styles.link, { marginTop: 4 }]}>{tr.forgotPassword || 'Forgot password?'}</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+          <Text style={[styles.link, { marginTop: 4 }]}>{tr.forgotPassword || 'Forgot password?'}</Text>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );

@@ -68,6 +68,10 @@ export default function AccessibilitySettingsScreen({ navigation }) {
           disabled={!hasBiometricHardware}
           hint={hasBiometricHardware ? 'Use fingerprint/Face ID to reopen the app' : 'No fingerprint/Face ID set up on this device'}
         />
+        <TouchableOpacity style={styles.changePasswordRow} onPress={() => navigation.navigate('ChangePassword')} accessibilityLabel="Change password">
+          <AppText style={[styles.rowLabel, { color: t.text }]}>Change Password</AppText>
+          <MaterialIcons name="chevron-right" size={22} color={t.textLight} />
+        </TouchableOpacity>
       </Section>
 
       <Section title="Language / भाषा / ভাষা" t={t}>
@@ -135,6 +139,7 @@ const styles = StyleSheet.create({
   chip:         { borderWidth: 1.5, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
   chipText:     { fontSize: 13, fontWeight: '600' },
   row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  changePasswordRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 },
   rowLabel:     { fontSize: 14, fontWeight: '600' },
   rowHint:      { fontSize: 11, marginTop: 2 },
   aboutBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, padding: 14 },

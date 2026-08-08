@@ -24,6 +24,9 @@ jest.mock('../src/services/api', () => ({
     verifyOtp: jest.fn(),
     register:  jest.fn(),
     login:     jest.fn(),
+    changePassword: jest.fn().mockResolvedValue({ data: { success: true } }),
+    forgotPassword: jest.fn().mockResolvedValue({ data: { success: true } }),
+    resetPassword:  jest.fn(),
   },
   ticketAPI: {
     create:  jest.fn().mockResolvedValue({ data: { ticketId: 'ticket-abc-123' } }),
