@@ -49,6 +49,7 @@ export const ISSUE_CATEGORIES = [
   { key: 'development',    label: 'Development',       icon: 'location-city',   color: '#607D8B' },
   { key: 'feedback',       label: 'Feedback',          icon: 'feedback',        color: '#00BCD4' },
   { key: 'others',         label: 'Others',            icon: 'more-horiz',      color: '#9E9E9E' },
+  { key: 'labour',         label: 'Labour / Workers (BMS)', icon: 'work',       color: '#00695C' },
 ];
 
 export const SUB_CATEGORIES = {
@@ -66,10 +67,45 @@ export const SUB_CATEGORIES = {
   others:          ['General Complaint','Any Other'],
 };
 
+// Labour/BMS sub-categories are grouped by worker type (unlike every other category's flat
+// list) so the picker can show a worker-type section header before its issues. The screen
+// combines them into a single "<Worker Type> – <Issue>" string on selection — see
+// IssueCategoryScreen.js — which must exactly match backend LABOUR_GROUPS
+// (backend/src/config/constants.js) since that's what gets stored on the ticket.
+export const LABOUR_GROUPS = {
+  'Corporate / Private Office Employee': ['Salary Delayed or Not Paid', 'No Appointment Letter', 'Wrongful Termination / Forced Resignation', 'PF / ESI / Gratuity Not Deposited', 'Workplace Harassment', 'Unpaid Overtime', 'Discrimination at Workplace', 'Other'],
+  'Factory / Industrial Worker':          ['Wages Below Minimum Wage', 'Unsafe Working Conditions / No Safety Gear', 'Workplace Accident, No Compensation', 'Excessive Working Hours, No Weekly Off', 'No ESI / PF Registration', 'Child Labour at Workplace', 'Wage Theft by Contractor', 'Other'],
+  'Construction Worker':                  ['Wages Not Paid by Contractor', 'Unsafe Site / No Safety Equipment', 'No BOCW Welfare Registration', 'Accident at Site, No Compensation', 'No Proper Accommodation or Drinking Water', 'Migrant Worker Stranded Without Wages', 'Child Labour at Site', 'Other'],
+  'Domestic Worker / Maid':               ['Salary Delayed or Not Paid', 'Physical or Verbal Abuse by Employer', 'Excessive Working Hours, No Weekly Off', 'Wrongful Accusation by Employer', 'Sudden Termination Without Notice or Dues', 'Sexual Harassment', 'No Written Work Agreement', 'Other'],
+  'Auto / Taxi / Cab Driver':             ['Unfair Account Deactivation by App', 'Fare or Commission Dispute', 'Harassment or Assault by Passenger', 'Extortion by Police / RTO', 'Vehicle Permit or License Issue', 'No Insurance or Accident Support', 'Other'],
+  'Bus / Transport Worker':               ['Salary Delayed or Not Paid', 'Excessive Duty Hours, No Rest', 'Unsafe Vehicle Condition', 'Harassment by Passenger or Contractor', 'Accident, No Compensation', 'Contract vs Permanent Status Dispute', 'Other'],
+  'Delivery / Gig Platform Worker':       ['Unfair Account Blocking', 'Incentive or Payment Not Credited', 'Accident During Delivery, No Support', 'Harassment by Customer', 'Unsafe Working Conditions', 'Other'],
+  'Security Guard':                       ['Salary Delayed or Not Paid', 'Excessive Duty Hours, No Weekly Off', 'No PF / ESI Registration', 'Harassment by Client or Site Manager', 'Wrongful Termination', 'Uniform / Equipment Cost Wrongly Deducted', 'Other'],
+  'Shop / Retail Employee':               ['Salary Delayed or Not Paid', 'No Appointment Letter', 'Excessive Working Hours, No Weekly Off', 'No PF / ESI Registration', 'Harassment by Owner or Manager', 'Wrongful Termination', 'Other'],
+  'Contract / Daily-Wage Labour':         ['Wage Theft by Contractor', 'Below Minimum Wage Payment', 'No Safety Measures Provided', 'Non-Payment After Work Completed', 'Bonded / Forced Labour', 'Other'],
+  'Govt / PSU Outsourced Staff':          ['Salary Delayed by Contractor', 'No Regularization Despite Long Service', 'No PF / ESI Despite Legal Requirement', 'Unequal Pay for Equal Work', 'Harassment by Supervisor', 'Other'],
+  'Scheme Worker (Anganwadi / ASHA / Mid-Day Meal)': ['Honorarium Delayed or Not Paid', 'No Social Security or Benefits', 'Excessive Workload', 'Lack of Recognition as Employee', 'Other'],
+  'Street Vendor / Hawker':               ['Harassment or Eviction by Police / Municipal Staff', 'Extortion to Allow Vending', 'No Vending Certificate or Zone', 'Goods Confiscated Unfairly', 'Other'],
+  'Agricultural Labour':                  ['Wages Not Paid by Landowner', 'Exploitation or Unfair Treatment', 'Unsafe Pesticide Exposure', 'No Labour Card or Scheme Benefit', 'Bonded Labour', 'Other'],
+  'Sanitation Worker':                    ['No Safety Gear (Manual Scavenging Risk)', 'Health Hazard Exposure', 'Salary Delayed or Not Paid', 'Caste-Based Discrimination at Workplace', 'No PF / ESI', 'Other'],
+  'Other Labour Issue':                   ['General Labour Dispute', 'Other'],
+};
+SUB_CATEGORIES.labour = LABOUR_GROUPS;
+
 // Mirrors backend PAYMENT_EXEMPT_GROUPS/PAYMENT_EXEMPT_SUBCATEGORY_LABELS (backend/src/config/constants.js)
 // — used only to show the "no payment needed" hint before submission; the backend is the source of truth.
 export const PAYMENT_EXEMPT_GROUPS = ['infrastructure', 'women_safety', 'missing'];
-export const PAYMENT_EXEMPT_SUBCATEGORY_LABELS = ['Elder Abuse / Neglect', 'Caste-Based Discrimination', 'Mental Health Crisis'];
+export const PAYMENT_EXEMPT_SUBCATEGORY_LABELS = [
+  'Elder Abuse / Neglect', 'Caste-Based Discrimination', 'Mental Health Crisis',
+  'Domestic Worker / Maid – Physical or Verbal Abuse by Employer',
+  'Domestic Worker / Maid – Sexual Harassment',
+  'Corporate / Private Office Employee – Workplace Harassment',
+  'Factory / Industrial Worker – Child Labour at Workplace',
+  'Construction Worker – Child Labour at Site',
+  'Contract / Daily-Wage Labour – Bonded / Forced Labour',
+  'Agricultural Labour – Bonded Labour',
+  'Sanitation Worker – No Safety Gear (Manual Scavenging Risk)',
+];
 
 // Selecting this sub-category shows the Tele-MANAS helpline immediately, before (optionally)
 // continuing to a confidential report — mental health is a crisis to respond to, not a queue ticket.

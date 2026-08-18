@@ -87,7 +87,7 @@ export default function AdminDashboardScreen({ navigation }) {
 
         {/* Dept breakdown */}
         <Text style={styles.sectionTitle}>Department Overview</Text>
-        {['Social Welfare','Politics','Marketing','Others'].map(dept => {
+        {['Social Welfare','Politics','Marketing','Others','BMS'].map(dept => {
           const dRows = deptStats.filter(r => r.name === dept);
           const total = dRows.reduce((s, r) => s + Number(r.count), 0);
           const critical = dRows.filter(r => r.priority === 'critical').reduce((s, r) => s + Number(r.count), 0);

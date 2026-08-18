@@ -27,6 +27,18 @@ export default function IssueCategoryScreen({ navigation, route }) {
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
 
+  // BMS/labour entry gate — shown once, right when the citizen taps the Labour category card,
+  // before they even pick a worker type. Pre-filled from the account where possible, since
+  // most citizens are reporting their own situation — but every field stays editable, since a
+  // BMS volunteer/caregiver may be filing on behalf of a different worker entirely.
+  const [showBmsIntake, setShowBmsIntake] = useState(false);
+  const [bmsDetails, setBmsDetails] = useState({
+    fullName: '', aadharNumber: '', voterIdNumber: '', organisationName: '',
+    idCardNumber: '', sector: '', monthlyWage: '', employmentDuration: '',
+    employerContact: '', isBmsMember: false, bmsMembershipNumber: '',
+  });
+  const setBms = (k, v) => setBmsDetails(d => ({ ...d, [k]: v }));
+
   const isFeeExempt = PAYMENT_EXEMPT_GROUPS.includes(category) || PAYMENT_EXEMPT_SUBCATEGORY_LABELS.includes(subCategory);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -111,7 +123,10 @@ export default function IssueCategoryScreen({ navigation, route }) {
     }
     setLoading(true);
     try {
-      const { data: ticket } = await ticketAPI.create({ category, subCategory, ...form });
+      const { data: ticket } = await ticketAPI.create({
+        category, subCategory, ...form,
+        ...(category === 'labour' ? { labourDetails: bmsDetails } : {}),
+      });
 
       // Upload any attached media files (non-blocking — failure doesn't abort submission).
       // Grouped by mediaType since the backend stores one `type` per upload request —
@@ -150,6 +165,76 @@ export default function IssueCategoryScreen({ navigation, route }) {
       Alert.alert(trCommon.error, e.response?.data?.message || 'Submission failed');
     } finally { setLoading(false); }
   };
+
+  if (showBmsIntake) {
+    const canContinue = bmsDetails.fullName.trim() && bmsDetails.organisationName.trim()
+      && (bmsDetails.aadharNumber.trim() || bmsDetails.voterIdNumber.trim());
+    return (
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          <Text style={styles.sectionTitle}>{tr.bmsTitle}</Text>
+          <Text style={styles.bmsIntro}>{tr.bmsIntro}</Text>
+
+          <Text style={styles.label}>{tr.bmsFullName}</Text>
+          <TextInput style={styles.input} value={bmsDetails.fullName} onChangeText={(v) => setBms('fullName', v)} placeholder={tr.bmsFullNamePlaceholder} />
+
+          <Text style={styles.label}>{tr.bmsIdProofNote}</Text>
+          <TextInput style={styles.input} value={bmsDetails.aadharNumber} onChangeText={(v) => setBms('aadharNumber', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsAadhar} keyboardType="number-pad" maxLength={12} />
+          <TextInput style={styles.input} value={bmsDetails.voterIdNumber} onChangeText={(v) => setBms('voterIdNumber', v.toUpperCase())} placeholder={tr.bmsVoterId} autoCapitalize="characters" maxLength={10} />
+
+          <Text style={styles.label}>{tr.bmsOrgName}</Text>
+          <TextInput style={styles.input} value={bmsDetails.organisationName} onChangeText={(v) => setBms('organisationName', v)} placeholder={tr.bmsOrgNamePlaceholder} />
+
+          <Text style={styles.label}>{tr.bmsIdCard}</Text>
+          <TextInput style={styles.input} value={bmsDetails.idCardNumber} onChangeText={(v) => setBms('idCardNumber', v)} placeholder={tr.bmsIdCardPlaceholder} />
+
+          <Text style={styles.label}>{tr.bmsSector}</Text>
+          <View style={styles.priorityRow}>
+            {['private', 'government_psu', 'unorganized', 'self_employed'].map((s) => (
+              <TouchableOpacity key={s} style={[styles.priorityChip, bmsDetails.sector === s && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }]}
+                onPress={() => setBms('sector', bmsDetails.sector === s ? '' : s)}>
+                <AppText style={[styles.priorityText, bmsDetails.sector === s && { color: '#FFF' }]}>{tr.bmsSectorOptions?.[s]}</AppText>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.label}>{tr.bmsDuration}</Text>
+          <View style={styles.priorityRow}>
+            {['lt_6m', '6m_2y', '2y_5y', 'gt_5y'].map((d) => (
+              <TouchableOpacity key={d} style={[styles.priorityChip, bmsDetails.employmentDuration === d && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }]}
+                onPress={() => setBms('employmentDuration', bmsDetails.employmentDuration === d ? '' : d)}>
+                <AppText style={[styles.priorityText, bmsDetails.employmentDuration === d && { color: '#FFF' }]}>{tr.bmsDurationOptions?.[d]}</AppText>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.label}>{tr.bmsWage}</Text>
+          <TextInput style={styles.input} value={bmsDetails.monthlyWage} onChangeText={(v) => setBms('monthlyWage', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsWagePlaceholder} keyboardType="number-pad" />
+
+          <Text style={styles.label}>{tr.bmsEmployerContact}</Text>
+          <TextInput style={styles.input} value={bmsDetails.employerContact} onChangeText={(v) => setBms('employerContact', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsEmployerContactPlaceholder} keyboardType="number-pad" maxLength={10} />
+
+          <TouchableOpacity style={styles.anonRow} onPress={() => setBms('isBmsMember', !bmsDetails.isBmsMember)}>
+            <MaterialIcons name={bmsDetails.isBmsMember ? 'check-box' : 'check-box-outline-blank'} size={22} color={COLORS.primary} />
+            <Text style={styles.anonText}>{tr.bmsIsMember}</Text>
+          </TouchableOpacity>
+          {bmsDetails.isBmsMember && (
+            <TextInput style={styles.input} value={bmsDetails.bmsMembershipNumber} onChangeText={(v) => setBms('bmsMembershipNumber', v)} placeholder={tr.bmsMembershipNumberPlaceholder} />
+          )}
+
+          {!canContinue && <Text style={styles.bmsRequiredNote}>{tr.bmsRequiredNote}</Text>}
+
+          <TouchableOpacity style={[styles.nextBtn, !canContinue && { opacity: 0.5 }]} disabled={!canContinue}
+            onPress={() => { setShowBmsIntake(false); setStep(1); }}>
+            <Text style={styles.nextBtnText}>{tr.bmsContinue}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.backBtn} onPress={() => { setShowBmsIntake(false); setCategory(''); }}>
+            <Text style={styles.backText}>{tr.changeCategory}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+    );
+  }
 
   if (showMentalHealthHelp) {
     return (
@@ -199,7 +284,15 @@ export default function IssueCategoryScreen({ navigation, route }) {
             <View style={styles.grid}>
               {ISSUE_CATEGORIES.map(cat => (
                 <TouchableOpacity key={cat.key} style={[styles.catCard, { borderColor: cat.color, backgroundColor: cat.color + '15' }]}
-                  onPress={() => { setCategory(cat.key); setSubCategory(''); setStep(1); }}>
+                  onPress={() => {
+                    setCategory(cat.key); setSubCategory('');
+                    if (cat.key === 'labour') {
+                      setBmsDetails(d => ({ ...d, fullName: d.fullName || user?.full_name || '', aadharNumber: d.aadharNumber || user?.aadhar_number || '', voterIdNumber: d.voterIdNumber || user?.voter_id_number || '' }));
+                      setShowBmsIntake(true);
+                    } else {
+                      setStep(1);
+                    }
+                  }}>
                   <MaterialIcons name={cat.icon} size={28} color={cat.color} />
                   <Text style={[styles.catLabel, { color: cat.color }]}>{trCat.groups?.[cat.key] || cat.label}</Text>
                 </TouchableOpacity>
@@ -212,17 +305,38 @@ export default function IssueCategoryScreen({ navigation, route }) {
         {step === 1 && (
           <>
             <Text style={styles.sectionTitle}>{tr.selectIssueType}</Text>
-            {(SUB_CATEGORIES[category] || []).map((sub, i) => (
-              <TouchableOpacity key={sub} style={[styles.subCard, subCategory === sub && styles.subCardActive]}
-                onPress={() => {
-                  setSubCategory(sub); set('title', sub);
-                  if (sub === MENTAL_HEALTH_SUBCATEGORY) setShowMentalHealthHelp(true);
-                  else setStep(2);
-                }}>
-                <AppText style={[styles.subText, subCategory === sub && styles.subTextActive]}>{trCat.subs?.[category]?.[i] || sub}</AppText>
-                <MaterialIcons name="chevron-right" size={20} color={subCategory === sub ? '#FFF' : COLORS.textLight} />
-              </TouchableOpacity>
-            ))}
+            {Array.isArray(SUB_CATEGORIES[category]) ? (
+              (SUB_CATEGORIES[category] || []).map((sub, i) => (
+                <TouchableOpacity key={sub} style={[styles.subCard, subCategory === sub && styles.subCardActive]}
+                  onPress={() => {
+                    setSubCategory(sub); set('title', sub);
+                    if (sub === MENTAL_HEALTH_SUBCATEGORY) setShowMentalHealthHelp(true);
+                    else setStep(2);
+                  }}>
+                  <AppText style={[styles.subText, subCategory === sub && styles.subTextActive]}>{trCat.subs?.[category]?.[i] || sub}</AppText>
+                  <MaterialIcons name="chevron-right" size={20} color={subCategory === sub ? '#FFF' : COLORS.textLight} />
+                </TouchableOpacity>
+              ))
+            ) : (
+              // Grouped shape (worker type → issues), currently only used by the 'labour' category —
+              // the selected value combines both, e.g. "Domestic Worker / Maid – Salary Delayed or Not Paid",
+              // since the ticket has no separate worker-type column.
+              Object.entries(SUB_CATEGORIES[category] || {}).map(([group, issues]) => (
+                <View key={group} style={styles.subGroup}>
+                  <Text style={styles.subGroupTitle}>{trCat.labourGroups?.[group] || group}</Text>
+                  {issues.map((issue, j) => {
+                    const combined = `${group} – ${issue}`;
+                    return (
+                      <TouchableOpacity key={issue} style={[styles.subCard, subCategory === combined && styles.subCardActive]}
+                        onPress={() => { setSubCategory(combined); set('title', combined); setStep(2); }}>
+                        <AppText style={[styles.subText, subCategory === combined && styles.subTextActive]}>{trCat.subs?.[category]?.[group]?.[j] || issue}</AppText>
+                        <MaterialIcons name="chevron-right" size={20} color={subCategory === combined ? '#FFF' : COLORS.textLight} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ))
+            )}
             <TouchableOpacity style={styles.backBtn} onPress={() => setStep(0)}>
               <Text style={styles.backText}>{tr.changeCategory}</Text>
             </TouchableOpacity>
@@ -351,9 +465,13 @@ const styles = StyleSheet.create({
   stepLabelActive: { color: COLORS.primary, fontWeight: '600' },
   body:            { padding: 16, paddingBottom: 40 },
   sectionTitle:    { fontSize: 20, fontWeight: 'bold', color: COLORS.text, marginBottom: 16 },
+  bmsIntro:        { fontSize: 13, color: COLORS.textLight, marginBottom: 16, lineHeight: 19 },
+  bmsRequiredNote: { fontSize: 12, color: COLORS.warning, marginBottom: 12 },
   grid:            { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   catCard:         { width: '47%', borderRadius: 12, borderWidth: 1.5, padding: 14, alignItems: 'center', gap: 6 },
   catLabel:        { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  subGroup:        { marginBottom: 10 },
+  subGroupTitle:   { fontSize: 13, fontWeight: 'bold', color: COLORS.textLight, textTransform: 'uppercase', marginBottom: 6, marginTop: 4 },
   subCard:         { backgroundColor: '#FFF', borderRadius: 10, padding: 14, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', elevation: 1 },
   subCardActive:   { backgroundColor: COLORS.primary },
   subText:         { flex: 1, flexShrink: 1, marginRight: 8, fontSize: 15, color: COLORS.text },
