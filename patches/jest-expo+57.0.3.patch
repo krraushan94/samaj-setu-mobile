@@ -1,0 +1,18 @@
+diff --git a/node_modules/jest-expo/src/preset/setup.js b/node_modules/jest-expo/src/preset/setup.js
+index 99f40f4..5a6cdb1 100644
+--- a/node_modules/jest-expo/src/preset/setup.js
++++ b/node_modules/jest-expo/src/preset/setup.js
+@@ -220,6 +220,13 @@ function attemptLookup(moduleName) {
+     }
+   }
+ 
++  // On Windows, stacktrace-js's stack parser mangles backslash-separated file paths,
++  // so the package.json lookup above can legitimately fail to resolve anything. Treat
++  // that the same as "no stack frame matched" instead of crashing path.join(null, ...).
++  if (!modulePath) {
++    return null;
++  }
++
+   const moduleMockPath = path.join(modulePath, '..', 'mocks', moduleName);
+   try {
+     const mockedPackageNativeModule = jest.requireActual(moduleMockPath);
