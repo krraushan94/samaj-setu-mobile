@@ -22,6 +22,14 @@ export default function SplashScreen({ navigation }) {
       Animated.spring(scaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }),
     ]).start();
 
+    let cancelled = false;
+    // Long enough that the splash still reads as intentional branding, short enough that a
+    // returning, already-authenticated citizen isn't forced to sit through the full animation
+    // every cold start just because the real loading work (local AsyncStorage reads) finished
+    // in well under a second. Biometric prompts naturally take longer than this on their own,
+    // so this floor never makes that flow feel rushed.
+    const MIN_DISPLAY_MS = 1200;
+
     const resume = async () => {
       await Promise.all([
         useThemeStore.getState().loadTheme(),
@@ -40,16 +48,21 @@ export default function SplashScreen({ navigation }) {
           const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Unlock Samaj Setu' }).catch(() => ({ success: false }));
           if (!result.success) {
             // Biometric failed/cancelled — fall back to a normal login rather than locking the user out
-            return navigation.replace('Welcome');
+            return 'Welcome';
           }
         }
       }
 
-      navigation.replace(destination || 'Language');
+      return destination || 'Language';
     };
 
-    const timer = setTimeout(resume, 2500);
-    return () => clearTimeout(timer);
+    const minDisplay = new Promise((resolve) => setTimeout(resolve, MIN_DISPLAY_MS));
+
+    Promise.all([resume(), minDisplay]).then(([destination]) => {
+      if (!cancelled) navigation.replace(destination);
+    });
+
+    return () => { cancelled = true; };
   }, []);
 
   return (

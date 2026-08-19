@@ -18,7 +18,7 @@ export default function OfficeVisitScreen({ navigation }) {
   const [form, setForm] = useState({
     visitorName: user?.full_name || '', contactMobile: user?.mobile || '',
     address: [user?.colony, user?.ward && `Ward ${user.ward}`, user?.mandal, user?.pincode].filter(Boolean).join(', '),
-    reason: '', numberOfPersons: '1', aadharNumber: '', preferredDate: '',
+    reason: '', numberOfPersons: '1', aadharNumber: user?.aadhar_number || '', preferredDate: '',
   });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -77,7 +77,11 @@ export default function OfficeVisitScreen({ navigation }) {
         <View style={[styles.form, { backgroundColor: t.card }]}>
           <TextInput style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]} placeholder="Your full name *" placeholderTextColor={t.textLight} value={form.visitorName} onChangeText={v => set('visitorName', v)} />
           <TextInput style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]} placeholder="Contact number *" keyboardType="phone-pad" maxLength={10} placeholderTextColor={t.textLight} value={form.contactMobile} onChangeText={v => set('contactMobile', v)} />
-          <TextInput style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]} placeholder="Aadhaar number (optional)" keyboardType="number-pad" maxLength={12} placeholderTextColor={t.textLight} value={form.aadharNumber} onChangeText={v => set('aadharNumber', v)} />
+          {/* Already on file from registration — no need to ask again. Only show this field
+              for the (rare, e.g. pre-Aadhaar-requirement) accounts that don't have one yet. */}
+          {!user?.aadhar_number && (
+            <TextInput style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]} placeholder="Aadhaar number (optional)" keyboardType="number-pad" maxLength={12} placeholderTextColor={t.textLight} value={form.aadharNumber} onChangeText={v => set('aadharNumber', v)} />
+          )}
           <TextInput style={[styles.input, styles.textarea, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]} placeholder="Your address / area you live in *" placeholderTextColor={t.textLight} value={form.address} onChangeText={v => set('address', v)} multiline numberOfLines={2} />
           <TextInput style={[styles.input, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]} placeholder="Number of persons visiting *" keyboardType="number-pad" maxLength={2} placeholderTextColor={t.textLight} value={form.numberOfPersons} onChangeText={v => set('numberOfPersons', v)} />
           <TextInput style={[styles.input, styles.textarea, { backgroundColor: t.inputBg, borderColor: t.border, color: t.text }]} placeholder="Reason for visit *" placeholderTextColor={t.textLight} value={form.reason} onChangeText={v => set('reason', v)} multiline numberOfLines={3} />

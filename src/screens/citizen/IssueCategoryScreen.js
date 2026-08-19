@@ -167,8 +167,12 @@ export default function IssueCategoryScreen({ navigation, route }) {
   };
 
   if (showBmsIntake) {
+    // If the account already has Aadhaar or Voter ID on file from registration, reuse it
+    // silently rather than asking a second time — only accounts missing both (e.g. very old
+    // ones from before it was mandatory) need to provide one here.
+    const hasIdOnFile = !!(user?.aadhar_number || user?.voter_id_number);
     const canContinue = bmsDetails.fullName.trim() && bmsDetails.organisationName.trim()
-      && (bmsDetails.aadharNumber.trim() || bmsDetails.voterIdNumber.trim());
+      && (hasIdOnFile || bmsDetails.aadharNumber.trim() || bmsDetails.voterIdNumber.trim());
     return (
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -178,9 +182,18 @@ export default function IssueCategoryScreen({ navigation, route }) {
           <Text style={styles.label}>{tr.bmsFullName}</Text>
           <TextInput style={styles.input} value={bmsDetails.fullName} onChangeText={(v) => setBms('fullName', v)} placeholder={tr.bmsFullNamePlaceholder} />
 
-          <Text style={styles.label}>{tr.bmsIdProofNote}</Text>
-          <TextInput style={styles.input} value={bmsDetails.aadharNumber} onChangeText={(v) => setBms('aadharNumber', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsAadhar} keyboardType="number-pad" maxLength={12} />
-          <TextInput style={styles.input} value={bmsDetails.voterIdNumber} onChangeText={(v) => setBms('voterIdNumber', v.toUpperCase())} placeholder={tr.bmsVoterId} autoCapitalize="characters" maxLength={10} />
+          {hasIdOnFile ? (
+            <View style={styles.bmsIdOnFileRow}>
+              <MaterialIcons name="verified" size={18} color={COLORS.success} />
+              <AppText style={styles.bmsIdOnFileText}>{tr.bmsIdOnFile}</AppText>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.label}>{tr.bmsIdProofNote}</Text>
+              <TextInput style={styles.input} value={bmsDetails.aadharNumber} onChangeText={(v) => setBms('aadharNumber', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsAadhar} keyboardType="number-pad" maxLength={12} />
+              <TextInput style={styles.input} value={bmsDetails.voterIdNumber} onChangeText={(v) => setBms('voterIdNumber', v.toUpperCase())} placeholder={tr.bmsVoterId} autoCapitalize="characters" maxLength={10} />
+            </>
+          )}
 
           <Text style={styles.label}>{tr.bmsOrgName}</Text>
           <TextInput style={styles.input} value={bmsDetails.organisationName} onChangeText={(v) => setBms('organisationName', v)} placeholder={tr.bmsOrgNamePlaceholder} />
@@ -467,6 +480,8 @@ const styles = StyleSheet.create({
   sectionTitle:    { fontSize: 20, fontWeight: 'bold', color: COLORS.text, marginBottom: 16 },
   bmsIntro:        { fontSize: 13, color: COLORS.textLight, marginBottom: 16, lineHeight: 19 },
   bmsRequiredNote: { fontSize: 12, color: COLORS.warning, marginBottom: 12 },
+  bmsIdOnFileRow:  { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#E8F5E9', borderRadius: 8, padding: 10, marginBottom: 14 },
+  bmsIdOnFileText: { flex: 1, fontSize: 13, color: COLORS.success },
   grid:            { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   catCard:         { width: '47%', borderRadius: 12, borderWidth: 1.5, padding: 14, alignItems: 'center', gap: 6 },
   catLabel:        { fontSize: 12, fontWeight: '600', textAlign: 'center' },

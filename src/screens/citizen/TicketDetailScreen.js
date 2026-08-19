@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
 import { ticketAPI, departmentAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import AppText from '../../components/AppText';
@@ -9,18 +10,23 @@ import AppText from '../../components/AppText';
 const ACTIONABLE_STATUSES = ['open', 'in_progress', 'resolved', 'closed'];
 
 export default function TicketDetailScreen({ navigation, route }) {
+  const t = useTheme();
   const { id } = route.params;
   const role = useAuthStore((s) => s.role);
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [resolutionNote, setResolutionNote] = useState('');
   const [noteText, setNoteText] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const load = () => ticketAPI.getById(id).then(({ data }) => setTicket(data.ticket)).catch(() => {}).finally(() => setLoading(false));
+  const load = () => {
+    setLoadError(false);
+    return ticketAPI.getById(id).then(({ data }) => setTicket(data.ticket)).catch(() => setLoadError(true)).finally(() => setLoading(false));
+  };
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { setLoading(true); load(); }, [id]);
 
   // Fetched once — the auto-routed department already has its own members, but an
   // admin re-routing to a different department (below) needs every department's list.
@@ -30,13 +36,18 @@ export default function TicketDetailScreen({ navigation, route }) {
 
   const members = (departments.find(d => d.id === ticket?.department_id)?.members || []).filter(m => m && m.is_active);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
-  if (!ticket)  return <View style={styles.center}><Text>Ticket not found</Text></View>;
+  if (loading) return <View style={[styles.center, { backgroundColor: t.background }]}><ActivityIndicator size="large" color={t.primary} /></View>;
+  if (loadError) return (
+    <View style={[styles.center, { backgroundColor: t.background, gap: 10 }]}>
+      <AppText style={{ color: t.danger, fontSize: 14, textAlign: 'center', paddingHorizontal: 24 }}>Couldn't load this ticket — the server may be waking up.</AppText>
+      <TouchableOpacity onPress={() => { setLoading(true); load(); }}><AppText style={{ color: t.secondary, fontWeight: '700' }}>Retry</AppText></TouchableOpacity>
+    </View>
+  );
+  if (!ticket)  return <View style={[styles.center, { backgroundColor: t.background }]}><AppText style={{ color: t.text }}>Ticket not found</AppText></View>;
 
   const canAct = (role === 'admin' || role === 'leader') && ticket.canManage !== false;
 
-  const changeStatus = async (status) => {
-    if (status === ticket.status) return;
+  const doChangeStatus = async (status) => {
     setBusy(true);
     try {
       await ticketAPI.updateStatus(ticket.id, { status, note: resolutionNote || undefined });
@@ -45,6 +56,20 @@ export default function TicketDetailScreen({ navigation, route }) {
     } catch (e) {
       Alert.alert('Error', e.response?.data?.message || 'Could not update status');
     } finally { setBusy(false); }
+  };
+
+  const changeStatus = (status) => {
+    if (status === ticket.status) return;
+    // Closing is the one status that's hard to walk back from (no further actions on a
+    // closed ticket) — confirm before committing to it, unlike the routine forward moves.
+    if (status === 'closed') {
+      Alert.alert('Close this ticket?', 'Once closed, no further status changes or notes can be added. Are you sure?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Close Ticket', style: 'destructive', onPress: () => doChangeStatus(status) },
+      ]);
+    } else {
+      doChangeStatus(status);
+    }
   };
 
   const submitNote = async () => {
@@ -88,46 +113,46 @@ export default function TicketDetailScreen({ navigation, route }) {
   const currentStep = statusSteps.indexOf(ticket.status);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.body}>
+    <ScrollView style={[styles.container, { backgroundColor: t.background }]} contentContainerStyle={styles.body}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: t.card }]}>
         <View style={styles.headerRow}>
-          <Text style={styles.ticketNum}>#{ticket.ticket_number}</Text>
+          <AppText style={[styles.ticketNum, { color: t.textLight }]}>#{ticket.ticket_number}</AppText>
           <View style={[styles.badge, { backgroundColor: PRIORITY_COLORS[ticket.priority] }]}>
-            <Text style={styles.badgeText}>{ticket.priority?.toUpperCase()}</Text>
+            <AppText style={styles.badgeText}>{ticket.priority?.toUpperCase()}</AppText>
           </View>
         </View>
-        <Text style={styles.title}>{ticket.title}</Text>
-        <Text style={styles.meta}>{ticket.category} • {ticket.sub_category}</Text>
+        <AppText style={[styles.title, { color: t.text }]}>{ticket.title}</AppText>
+        <AppText style={[styles.meta, { color: t.textLight }]}>{ticket.category} • {ticket.sub_category}</AppText>
       </View>
 
       {/* Status Timeline */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Status Progress</Text>
+      <View style={[styles.card, { backgroundColor: t.card }]}>
+        <AppText style={[styles.cardTitle, { color: t.text }]}>Status Progress</AppText>
         <View style={styles.timeline}>
           {statusSteps.map((s, i) => (
             <View key={s} style={styles.timelineItem}>
-              <View style={[styles.timelineDot, i <= currentStep && styles.timelineDotActive]} />
-              {i < statusSteps.length - 1 && <View style={[styles.timelineLine, i < currentStep && styles.timelineLineActive]} />}
-              <AppText style={[styles.timelineLabel, i === currentStep && styles.timelineLabelActive]}>{STATUS_LABELS[s]}</AppText>
+              <View style={[styles.timelineDot, { backgroundColor: t.border }, i <= currentStep && { backgroundColor: t.primary }]} />
+              {i < statusSteps.length - 1 && <View style={[styles.timelineLine, { backgroundColor: t.border }, i < currentStep && { backgroundColor: t.primary }]} />}
+              <AppText style={[styles.timelineLabel, { color: t.textLight }, i === currentStep && { color: t.primary, fontWeight: '600' }]}>{STATUS_LABELS[s]}</AppText>
             </View>
           ))}
         </View>
       </View>
 
       {/* Details */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Issue Details</Text>
-        {ticket.description && <Text style={styles.desc}>{ticket.description}</Text>}
+      <View style={[styles.card, { backgroundColor: t.card }]}>
+        <AppText style={[styles.cardTitle, { color: t.text }]}>Issue Details</AppText>
+        {ticket.description && <AppText style={[styles.desc, { color: t.text }]}>{ticket.description}</AppText>}
         {ticket.location_text && (
-          <View style={styles.row}><MaterialIcons name="location-on" size={16} color={COLORS.textLight} /><Text style={styles.info}> {ticket.location_text}</Text></View>
+          <View style={styles.row}><MaterialIcons name="location-on" size={16} color={t.textLight} /><AppText style={[styles.info, { color: t.textLight }]}> {ticket.location_text}</AppText></View>
         )}
-        <View style={styles.row}><MaterialIcons name="business" size={16} color={COLORS.textLight} /><Text style={styles.info}> {ticket.department_name}</Text></View>
-        <View style={styles.row}><MaterialIcons name="event" size={16} color={COLORS.textLight} /><Text style={styles.info}> {new Date(ticket.created_at).toLocaleString('en-IN')}</Text></View>
+        <View style={styles.row}><MaterialIcons name="business" size={16} color={t.textLight} /><AppText style={[styles.info, { color: t.textLight }]}> {ticket.department_name}</AppText></View>
+        <View style={styles.row}><MaterialIcons name="event" size={16} color={t.textLight} /><AppText style={[styles.info, { color: t.textLight }]}> {new Date(ticket.created_at).toLocaleString('en-IN')}</AppText></View>
         {ticket.caregiver_name && (
           <View style={styles.row}>
-            <MaterialIcons name="volunteer-activism" size={16} color={COLORS.textLight} />
-            <Text style={styles.info}> Caregiver: {ticket.caregiver_name}{ticket.caregiver_mobile ? ` (${ticket.caregiver_mobile})` : ''}</Text>
+            <MaterialIcons name="volunteer-activism" size={16} color={t.textLight} />
+            <AppText style={[styles.info, { color: t.textLight }]}> Caregiver: {ticket.caregiver_name}{ticket.caregiver_mobile ? ` (${ticket.caregiver_mobile})` : ''}</AppText>
           </View>
         )}
       </View>
@@ -135,18 +160,18 @@ export default function TicketDetailScreen({ navigation, route }) {
       {/* Resolution proof */}
       {ticket.resolution_note && (
         <View style={[styles.card, { backgroundColor: '#E8F5E9' }]}>
-          <Text style={styles.cardTitle}>✅ Resolution Update</Text>
-          <Text style={styles.desc}>{ticket.resolution_note}</Text>
+          <AppText style={styles.cardTitle}>✅ Resolution Update</AppText>
+          <AppText style={styles.desc}>{ticket.resolution_note}</AppText>
         </View>
       )}
 
       {/* Rating */}
       {ticket.status === 'resolved' && !ticket.citizen_rating && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Rate this Resolution</Text>
+        <View style={[styles.card, { backgroundColor: t.card }]}>
+          <AppText style={[styles.cardTitle, { color: t.text }]}>Rate this Resolution</AppText>
           <View style={styles.stars}>
             {[1,2,3,4,5].map(s => (
-              <TouchableOpacity key={s} onPress={() => ticketAPI.rate(ticket.id, { rating: s }).then(() => Alert.alert('Thanks!', 'Your feedback was submitted')).catch(() => {})}>
+              <TouchableOpacity key={s} onPress={() => ticketAPI.rate(ticket.id, { rating: s }).then(() => Alert.alert('Thanks!', 'Your feedback was submitted')).catch(() => {})} accessibilityLabel={`Rate ${s} stars`} accessibilityRole="button">
                 <Text style={styles.star}>⭐</Text>
               </TouchableOpacity>
             ))}
@@ -156,10 +181,10 @@ export default function TicketDetailScreen({ navigation, route }) {
 
       {/* Team / Admin actions — hidden entirely for citizens and for other departments' tickets */}
       {canAct && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Manage Ticket</Text>
+        <View style={[styles.card, { backgroundColor: t.card }]}>
+          <AppText style={[styles.cardTitle, { color: t.text }]}>Manage Ticket</AppText>
 
-          <Text style={styles.label}>Change Status</Text>
+          <AppText style={[styles.label, { color: t.textLight }]}>Change Status</AppText>
           <View style={styles.statusRow}>
             {ACTIONABLE_STATUSES.map(s => (
               <TouchableOpacity
@@ -167,14 +192,17 @@ export default function TicketDetailScreen({ navigation, route }) {
                 style={[styles.statusChip, { borderColor: STATUS_COLORS[s] }, ticket.status === s && { backgroundColor: STATUS_COLORS[s] }]}
                 disabled={busy}
                 onPress={() => changeStatus(s)}
+                accessibilityLabel={`Set status to ${STATUS_LABELS[s]}`}
+                accessibilityRole="button"
               >
-                <Text style={[styles.statusChipText, { color: ticket.status === s ? '#FFF' : STATUS_COLORS[s] }]}>{STATUS_LABELS[s]}</Text>
+                <AppText style={[styles.statusChipText, { color: ticket.status === s ? '#FFF' : STATUS_COLORS[s] }]}>{STATUS_LABELS[s]}</AppText>
               </TouchableOpacity>
             ))}
           </View>
           <TextInput
-            style={styles.noteInput}
+            style={[styles.noteInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]}
             placeholder="Resolution note (used when you move to Resolved/Closed)"
+            placeholderTextColor={t.textLight}
             value={resolutionNote}
             onChangeText={setResolutionNote}
             multiline
@@ -182,16 +210,18 @@ export default function TicketDetailScreen({ navigation, route }) {
 
           {role === 'admin' && departments.length > 0 && (
             <>
-              <Text style={styles.label}>Department (auto-routed by category — change if misrouted)</Text>
+              <AppText style={[styles.label, { color: t.textLight }]}>Department (auto-routed by category — change if misrouted)</AppText>
               <View style={styles.statusRow}>
                 {departments.map(d => (
                   <TouchableOpacity
                     key={d.id}
-                    style={[styles.assignChip, ticket.department_id === d.id && styles.assignChipActive]}
+                    style={[styles.assignChip, { borderColor: t.border, backgroundColor: t.card }, ticket.department_id === d.id && { backgroundColor: t.secondary, borderColor: t.secondary }]}
                     disabled={busy}
                     onPress={() => reassignDepartment(d.id)}
+                    accessibilityLabel={`Reassign to ${d.name} department`}
+                    accessibilityRole="button"
                   >
-                    <Text style={[styles.assignChipText, ticket.department_id === d.id && styles.assignChipTextActive]}>{d.name}</Text>
+                    <AppText style={[styles.assignChipText, { color: t.text }, ticket.department_id === d.id && styles.assignChipTextActive]}>{d.name}</AppText>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -200,26 +230,28 @@ export default function TicketDetailScreen({ navigation, route }) {
 
           {members.length > 0 && (
             <>
-              <Text style={styles.label}>Assign To</Text>
+              <AppText style={[styles.label, { color: t.textLight }]}>Assign To</AppText>
               <View style={styles.statusRow}>
                 {members.map(m => (
                   <TouchableOpacity
                     key={m.id}
-                    style={[styles.assignChip, ticket.assigned_to === m.id && styles.assignChipActive]}
+                    style={[styles.assignChip, { borderColor: t.border, backgroundColor: t.card }, ticket.assigned_to === m.id && { backgroundColor: t.secondary, borderColor: t.secondary }]}
                     disabled={busy}
                     onPress={() => assignTo(m.id)}
+                    accessibilityLabel={`Assign to ${m.full_name}`}
+                    accessibilityRole="button"
                   >
-                    <Text style={[styles.assignChipText, ticket.assigned_to === m.id && styles.assignChipTextActive]}>{m.full_name}</Text>
+                    <AppText style={[styles.assignChipText, { color: t.text }, ticket.assigned_to === m.id && styles.assignChipTextActive]}>{m.full_name}</AppText>
                   </TouchableOpacity>
                 ))}
               </View>
             </>
           )}
 
-          <Text style={styles.label}>Add Internal Note</Text>
+          <AppText style={[styles.label, { color: t.textLight }]}>Add Internal Note</AppText>
           <View style={styles.row}>
-            <TextInput style={[styles.noteInput, { flex: 1, marginBottom: 0 }]} placeholder="Note visible to the team" value={noteText} onChangeText={setNoteText} multiline />
-            <TouchableOpacity style={styles.addNoteBtn} disabled={busy || !noteText.trim()} onPress={submitNote}>
+            <TextInput style={[styles.noteInput, { flex: 1, marginBottom: 0, borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder="Note visible to the team" placeholderTextColor={t.textLight} value={noteText} onChangeText={setNoteText} multiline />
+            <TouchableOpacity style={[styles.addNoteBtn, { backgroundColor: t.primary }]} disabled={busy || !noteText.trim()} onPress={submitNote} accessibilityLabel="Submit note" accessibilityRole="button">
               <MaterialIcons name="send" size={20} color="#FFF" />
             </TouchableOpacity>
           </View>
@@ -228,18 +260,18 @@ export default function TicketDetailScreen({ navigation, route }) {
 
       {/* History */}
       {ticket.history?.length > 0 && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Activity Log</Text>
+        <View style={[styles.card, { backgroundColor: t.card }]}>
+          <AppText style={[styles.cardTitle, { color: t.text }]}>Activity Log</AppText>
           {ticket.history.filter(Boolean).map((h, i) => (
             <View key={i} style={styles.histItem}>
-              <View style={styles.histDot} />
+              <View style={[styles.histDot, { backgroundColor: t.primary }]} />
               <View>
                 {h.new_status
-                  ? <Text style={styles.histStatus}>{STATUS_LABELS[h.old_status] || h.old_status || 'Created'} → {STATUS_LABELS[h.new_status] || h.new_status}</Text>
-                  : <Text style={styles.histStatus}>Note by {h.changed_by}</Text>
+                  ? <AppText style={[styles.histStatus, { color: t.text }]}>{STATUS_LABELS[h.old_status] || h.old_status || 'Created'} → {STATUS_LABELS[h.new_status] || h.new_status}</AppText>
+                  : <AppText style={[styles.histStatus, { color: t.text }]}>Note by {h.changed_by}</AppText>
                 }
-                {h.note && <Text style={styles.histNote}>{h.note}</Text>}
-                <Text style={styles.histDate}>{new Date(h.created_at).toLocaleString('en-IN')}</Text>
+                {h.note && <AppText style={[styles.histNote, { color: t.textLight }]}>{h.note}</AppText>}
+                <AppText style={[styles.histDate, { color: t.textLight }]}>{new Date(h.created_at).toLocaleString('en-IN')}</AppText>
               </View>
             </View>
           ))}

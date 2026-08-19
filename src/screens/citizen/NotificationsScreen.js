@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } fr
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../../store/themeStore';
 import { notificationAPI } from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
 
 const TYPE_ICONS = {
   sos: 'emergency', ticket_assigned: 'assignment-ind', ticket_status: 'confirmation-number',
@@ -10,8 +11,9 @@ const TYPE_ICONS = {
   task_assigned: 'add-task', task_status: 'fact-check',
 };
 
-export default function NotificationsScreen() {
+export default function NotificationsScreen({ navigation }) {
   const t = useTheme();
+  const role = useAuthStore((s) => s.role);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -25,9 +27,20 @@ export default function NotificationsScreen() {
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
   const markRead = async (item) => {
-    if (item.is_read) return;
-    setNotifications(list => list.map(n => n.id === item.id ? { ...n, is_read: true } : n));
-    try { await notificationAPI.markRead(item.id); } catch {}
+    if (!item.is_read) {
+      setNotifications(list => list.map(n => n.id === item.id ? { ...n, is_read: true } : n));
+      try { await notificationAPI.markRead(item.id); } catch {}
+    }
+    // Route the tap to whatever this notification is about — previously a notification
+    // could only ever be marked read, never actually taken anywhere.
+    if (item.entity_type === 'ticket' && item.entity_id) {
+      const isTeamRole = role === 'leader' || role === 'member';
+      navigation.navigate(isTeamRole ? 'TeamTicketDetail' : 'TicketDetail', { id: item.entity_id });
+    } else if (item.entity_type === 'task') {
+      navigation.navigate('TeamWorkspace');
+    } else if (item.entity_type === 'office_visit') {
+      navigation.navigate('OfficeVisit');
+    }
   };
 
   return (

@@ -20,10 +20,10 @@ export default function SimpleHomeScreen({ navigation }) {
   };
 
   const TILES = [
-    { icon: 'report-problem', label: 'Report Issue', color: COLORS.danger,    bg: '#FFF3F3', onPress: () => navigation.navigate('IssueCategory') },
-    { icon: 'list-alt',       label: 'My Tickets',   color: COLORS.secondary, bg: '#F3F7FF', onPress: () => navigation.navigate('MyTickets') },
-    { icon: 'sos',            label: 'SOS',          color: COLORS.sos,       bg: '#FFEBEE', onPress: triggerSOS },
-    { icon: 'people',         label: 'Community',    color: COLORS.success,  bg: '#F3FFF3', onPress: () => navigation.navigate('CommunityBoard') },
+    { icon: 'report-problem', label: tr.logIssue,      color: COLORS.danger,    bg: '#FFF3F3', onPress: () => navigation.navigate('IssueCategory') },
+    { icon: 'list-alt',       label: tr.myTicketsTile,  color: COLORS.secondary, bg: '#F3F7FF', onPress: () => navigation.navigate('MyTickets') },
+    { icon: 'sos',            label: 'SOS',            color: COLORS.sos,       bg: '#FFEBEE', onPress: triggerSOS },
+    { icon: 'people',         label: tr.community,     color: COLORS.success,  bg: '#F3FFF3', onPress: () => navigation.navigate('CommunityBoard') },
   ];
 
   return (
@@ -43,7 +43,7 @@ export default function SimpleHomeScreen({ navigation }) {
       </View>
       <TouchableOpacity style={styles.settingsLink} onPress={() => navigation.navigate('AccessibilitySettings')}>
         <MaterialIcons name="settings" size={22} color={t.textLight} />
-        <AppText style={[styles.settingsText, { color: t.textLight }]}>Settings</AppText>
+        <AppText style={[styles.settingsText, { color: t.textLight }]}>{tr.settings}</AppText>
       </TouchableOpacity>
     </View>
   );

@@ -1,32 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Alert, Modal, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
 import { ticketAPI, paymentAPI, departmentAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import AppText from '../../components/AppText';
 
 export default function TeamDashboardScreen({ navigation }) {
+  const th = useTheme();
   const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
   const logout = useAuthStore((s) => s.logout);
   const [tickets, setTickets] = useState([]);
   const [filter, setFilter] = useState('open');
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [memberForm, setMemberForm] = useState({ fullName: '', username: '', password: '' });
   const [memberError, setMemberError] = useState('');
 
   const load = async () => {
+    setLoadError(false);
     try {
       const { data } = await ticketAPI.list({ status: filter !== 'all' ? filter : undefined, limit: 50 });
       setTickets(data.tickets || []);
-    } catch {}
+    } catch {
+      setLoadError(true);
+    }
   };
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => { setLoading(true); load().finally(() => setLoading(false)); }, [filter]);
+
+  const confirmLogout = () => {
+    Alert.alert('Log out?', 'You will need to log in again to access your team dashboard.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log Out', style: 'destructive', onPress: () => { logout(); navigation.replace('Welcome'); } },
+    ]);
+  };
 
   const FILTERS = ['all', 'open', 'in_progress', 'resolved'];
 
@@ -47,7 +61,7 @@ export default function TeamDashboardScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: th.background }]}>
       <LinearGradient colors={['#004D40', '#00695C']} style={styles.header}>
         <View style={styles.headerRow}>
           <View>
@@ -56,63 +70,72 @@ export default function TeamDashboardScreen({ navigation }) {
           </View>
           <View style={{ flexDirection: 'row', gap: 16 }}>
             {role === 'leader' && (
-              <TouchableOpacity onPress={() => { setShowAddMember(true); setMemberError(''); }} accessibilityLabel="Add team member">
+              <TouchableOpacity onPress={() => { setShowAddMember(true); setMemberError(''); }} accessibilityLabel="Add team member" accessibilityRole="button">
                 <MaterialIcons name="person-add" size={22} color="#FFF" />
               </TouchableOpacity>
             )}
-            <TouchableOpacity onPress={() => navigation.navigate('Notifications')} accessibilityLabel="Notifications">
+            <TouchableOpacity onPress={() => navigation.navigate('Notifications')} accessibilityLabel="Notifications" accessibilityRole="button">
               <MaterialIcons name="notifications" size={22} color="#FFF" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('AccessibilitySettings')} accessibilityLabel="Settings">
+            <TouchableOpacity onPress={() => navigation.navigate('AccessibilitySettings')} accessibilityLabel="Settings" accessibilityRole="button">
               <MaterialIcons name="settings" size={22} color="#FFF" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { logout(); navigation.replace('Welcome'); }} accessibilityLabel="Log out">
+            <TouchableOpacity onPress={confirmLogout} accessibilityLabel="Log out" accessibilityRole="button">
               <MaterialIcons name="logout" size={22} color="#FFF" />
             </TouchableOpacity>
           </View>
         </View>
       </LinearGradient>
 
-      <View style={styles.filterRow}>
+      <View style={[styles.filterRow, { backgroundColor: th.card }]}>
         {FILTERS.map(f => (
-          <TouchableOpacity key={f} style={[styles.filterChip, filter === f && styles.filterActive]} onPress={() => setFilter(f)}>
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+          <TouchableOpacity key={f} style={[styles.filterChip, { borderColor: th.border }, filter === f && styles.filterActive]} onPress={() => setFilter(f)}>
+            <AppText style={[styles.filterText, { color: th.text }, filter === f && styles.filterTextActive]}>
               {f === 'all' ? 'All' : STATUS_LABELS[f]}
-            </Text>
+            </AppText>
           </TouchableOpacity>
         ))}
       </View>
 
+      {loading ? (
+        <ActivityIndicator color="#00695C" style={styles.loadingSpinner} />
+      ) : loadError ? (
+        <View style={styles.errorBox}>
+          <AppText style={[styles.errorText, { color: th.danger }]}>Couldn't load tickets — the server may be waking up.</AppText>
+          <TouchableOpacity onPress={load}><AppText style={[styles.retryText, { color: th.secondary }]}>Retry</AppText></TouchableOpacity>
+        </View>
+      ) : (
       <FlatList
         data={tickets}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        keyExtractor={t => t.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>No tickets found</Text>}
-        renderItem={({ item: t }) => (
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('TeamTicketDetail', { id: t.id, readOnly: t.canManage === false })}>
-            {t.canManage === false && (
-              <View style={styles.viewOnlyBanner}><Text style={styles.viewOnlyText}>👁️ View only — {t.department_name || 'other department'}</Text></View>
+        ListEmptyComponent={<AppText style={[styles.empty, { color: th.textLight }]}>No tickets found</AppText>}
+        renderItem={({ item: ticket }) => (
+          <TouchableOpacity style={[styles.card, { backgroundColor: th.card }]} onPress={() => navigation.navigate('TeamTicketDetail', { id: ticket.id, readOnly: ticket.canManage === false })}>
+            {ticket.canManage === false && (
+              <View style={styles.viewOnlyBanner}><AppText style={styles.viewOnlyText}>👁️ View only — {ticket.department_name || 'other department'}</AppText></View>
             )}
-            {t.priority === 'critical' && (
-              <View style={styles.criticalBanner}><Text style={styles.criticalText}>🔴 CRITICAL — Immediate Action Required</Text></View>
+            {ticket.priority === 'critical' && (
+              <View style={styles.criticalBanner}><AppText style={styles.criticalText}>🔴 CRITICAL — Immediate Action Required</AppText></View>
             )}
             <View style={styles.cardTop}>
-              <Text style={styles.ticketNum}>#{t.ticket_number}</Text>
-              <View style={[styles.badge, { backgroundColor: PRIORITY_COLORS[t.priority] }]}>
-                <Text style={styles.badgeText}>{t.priority?.toUpperCase()}</Text>
+              <AppText style={[styles.ticketNum, { color: th.textLight }]}>#{ticket.ticket_number}</AppText>
+              <View style={[styles.badge, { backgroundColor: PRIORITY_COLORS[ticket.priority] }]}>
+                <AppText style={styles.badgeText}>{ticket.priority?.toUpperCase()}</AppText>
               </View>
             </View>
-            <Text style={styles.title} numberOfLines={2}>{t.title}</Text>
+            <AppText style={[styles.title, { color: th.text }]} numberOfLines={2}>{ticket.title}</AppText>
             <View style={styles.cardBottom}>
-              <AppText style={styles.meta} numberOfLines={2}>{t.sub_category} • Ward {t.ward || '–'}</AppText>
-              <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[t.status] + '22' }]}>
-                <Text style={[styles.statusText, { color: STATUS_COLORS[t.status] }]}>{STATUS_LABELS[t.status]}</Text>
+              <AppText style={[styles.meta, { color: th.textLight }]} numberOfLines={2}>{ticket.sub_category} • Ward {ticket.ward || '–'}</AppText>
+              <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[ticket.status] + '22' }]}>
+                <AppText style={[styles.statusText, { color: STATUS_COLORS[ticket.status] }]}>{STATUS_LABELS[ticket.status]}</AppText>
               </View>
             </View>
           </TouchableOpacity>
         )}
       />
+      )}
 
       <Modal visible={showAddMember} transparent animationType="fade" onRequestClose={() => setShowAddMember(false)}>
         <View style={styles.modalOverlay}>
@@ -142,6 +165,10 @@ const styles = StyleSheet.create({
   filterRow:      { flexDirection: 'row', backgroundColor: '#FFF', paddingVertical: 10, paddingHorizontal: 12, gap: 8, elevation: 1 },
   filterChip:     { borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: COLORS.border },
   filterActive:   { backgroundColor: '#00695C', borderColor: '#00695C' },
+  loadingSpinner: { marginTop: 40 },
+  errorBox:       { alignItems: 'center', padding: 24, gap: 8 },
+  errorText:      { fontSize: 14, textAlign: 'center' },
+  retryText:      { fontSize: 14, fontWeight: '700' },
   filterText:     { fontSize: 13, color: COLORS.text },
   filterTextActive:{ color: '#FFF', fontWeight: '600' },
   list:           { padding: 12, gap: 10, paddingBottom: 32 },

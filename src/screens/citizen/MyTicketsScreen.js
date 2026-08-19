@@ -1,68 +1,85 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { ticketAPI } from '../../services/api';
 
 export default function MyTicketsScreen({ navigation }) {
+  const t = useTheme();
   const [tickets, setTickets] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
+    setLoadError(false);
     try {
       const params = filter !== 'all' ? { status: filter } : {};
       const { data } = await ticketAPI.list(params);
       setTickets(data.tickets || []);
-    } catch {}
+    } catch {
+      setLoadError(true);
+    }
   };
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => { setLoading(true); load().finally(() => setLoading(false)); }, [filter]);
 
   const FILTERS = ['all', 'payment_pending', 'open', 'in_progress', 'resolved', 'closed'];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.filterRow}>
+    <View style={[styles.container, { backgroundColor: t.background }]}>
+      <View style={[styles.filterRow, { backgroundColor: t.card }]}>
         <FlatList horizontal data={FILTERS} showsHorizontalScrollIndicator={false}
           keyExtractor={f => f}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.filterChip, filter === item && styles.filterChipActive]} onPress={() => setFilter(item)}>
-              <Text style={[styles.filterText, filter === item && styles.filterTextActive]}>
+            <TouchableOpacity style={[styles.filterChip, { borderColor: t.border }, filter === item && { backgroundColor: t.primary, borderColor: t.primary }]} onPress={() => setFilter(item)}>
+              <AppText style={[styles.filterText, { color: t.text }, filter === item && styles.filterTextActive]}>
                 {item === 'all' ? 'All' : STATUS_LABELS[item]}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           )} />
       </View>
 
-      <FlatList
-        data={tickets}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        keyExtractor={t => t.id}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>No tickets found</Text>}
-        renderItem={({ item: t }) => (
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('TicketDetail', { id: t.id })}>
-            <View style={styles.cardTop}>
-              <Text style={styles.ticketNum}>#{t.ticket_number}</Text>
-              <View style={styles.badges}>
-                <View style={[styles.badge, { backgroundColor: PRIORITY_COLORS[t.priority] }]}>
-                  <Text style={styles.badgeText}>{t.priority?.toUpperCase()}</Text>
-                </View>
-                <View style={[styles.badge, { backgroundColor: STATUS_COLORS[t.status] }]}>
-                  <Text style={styles.badgeText}>{STATUS_LABELS[t.status]}</Text>
+      {loading ? (
+        <ActivityIndicator color={t.primary} style={styles.loadingSpinner} />
+      ) : loadError ? (
+        <View style={styles.errorBox}>
+          <AppText style={[styles.errorText, { color: t.danger }]}>Couldn't load your tickets — the server may be waking up.</AppText>
+          <TouchableOpacity onPress={load}><AppText style={[styles.retryText, { color: t.secondary }]}>Retry</AppText></TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={tickets}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={<AppText style={[styles.empty, { color: t.textLight }]}>No tickets found</AppText>}
+          renderItem={({ item: ticket }) => (
+            <TouchableOpacity style={[styles.card, { backgroundColor: t.card }]} onPress={() => navigation.navigate('TicketDetail', { id: ticket.id })}>
+              <View style={styles.cardTop}>
+                <AppText style={[styles.ticketNum, { color: t.textLight }]}>#{ticket.ticket_number}</AppText>
+                <View style={styles.badges}>
+                  <View style={[styles.badge, { backgroundColor: PRIORITY_COLORS[ticket.priority] }]}>
+                    <AppText style={styles.badgeText}>{ticket.priority?.toUpperCase()}</AppText>
+                  </View>
+                  <View style={[styles.badge, { backgroundColor: STATUS_COLORS[ticket.status] }]}>
+                    <AppText style={styles.badgeText}>{STATUS_LABELS[ticket.status]}</AppText>
+                  </View>
                 </View>
               </View>
-            </View>
-            <Text style={styles.title} numberOfLines={2}>{t.title}</Text>
-            <View style={styles.cardBottom}>
-              <MaterialIcons name="category" size={14} color={COLORS.textLight} />
-              <Text style={styles.meta}> {t.category} • {new Date(t.created_at).toLocaleDateString('en-IN')}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+              <AppText style={[styles.title, { color: t.text }]} numberOfLines={2}>{ticket.title}</AppText>
+              <View style={styles.cardBottom}>
+                <MaterialIcons name="category" size={14} color={t.textLight} />
+                <AppText style={[styles.meta, { color: t.textLight }]}> {ticket.category} • {new Date(ticket.created_at).toLocaleDateString('en-IN')}</AppText>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -76,6 +93,10 @@ const styles = StyleSheet.create({
   filterTextActive:{ color: '#FFF', fontWeight: '600' },
   list:            { padding: 16, gap: 10, paddingBottom: 32 },
   empty:           { textAlign: 'center', color: COLORS.textLight, marginTop: 60, fontSize: 15 },
+  loadingSpinner:  { marginTop: 40 },
+  errorBox:        { alignItems: 'center', padding: 24, gap: 8 },
+  errorText:       { fontSize: 14, textAlign: 'center' },
+  retryText:       { fontSize: 14, fontWeight: '700' },
   card:            { backgroundColor: '#FFF', borderRadius: 14, padding: 14, elevation: 1 },
   cardTop:         { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' },
   ticketNum:       { fontSize: 12, color: COLORS.textLight, fontWeight: '600' },

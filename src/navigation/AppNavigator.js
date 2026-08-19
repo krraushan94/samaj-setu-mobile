@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants';
+import { useTheme } from '../store/themeStore';
 import { navigationRef } from './navigationRef';
 
 // Auth screens
@@ -80,15 +81,31 @@ function TeamTabs() {
       <Tab.Screen name="TeamDashboard"    component={TeamDashboardScreen}  options={{ title: 'Dashboard', tabBarIcon: tabBarIcon('dashboard') }} />
       <Tab.Screen name="TeamTickets"      component={MyTicketsScreen}      options={{ title: 'Tickets',   tabBarIcon: tabBarIcon('list-alt') }} />
       <Tab.Screen name="TeamWorkspace"    component={TeamWorkspaceScreen}  options={{ title: 'Workspace', tabBarIcon: tabBarIcon('assignment') }} />
-      <Tab.Screen name="TeamTicketDetail" component={TicketDetailScreen}   options={{ title: 'Detail',    tabBarIcon: tabBarIcon('info'), tabBarButton: () => null }} />
     </Tab.Navigator>
   );
 }
+// TeamTicketDetail used to also be registered here as a hidden tab (tabBarButton: () => null).
+// That was a real bug, not a deliberate choice: React Navigation resolves a route name in the
+// *current* navigator first, so navigate('TeamTicketDetail', ...) called from TeamDashboardScreen
+// (nested inside TeamTabs) always hit this local, headerless, back-button-less copy instead of the
+// proper top-level Stack.Screen below — a dead end for whoever tapped a ticket from the dashboard.
+// Removing it here lets that same call correctly bubble up to the top-level screen instead.
 
 export default function AppNavigator() {
+  // Subscribing to the theme here means every screen using the default native header
+  // (headerShown: true, no custom header) picks up dark mode / high contrast automatically —
+  // previously those headers stayed hardcoded light regardless of the screen body's theme.
+  const theme = useTheme();
+  const headerScreenOptions = {
+    headerShown: false,
+    headerStyle: { backgroundColor: theme.navBar },
+    headerTintColor: theme.text,
+    headerTitleStyle: { color: theme.text },
+  };
+
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
+      <Stack.Navigator screenOptions={headerScreenOptions} initialRouteName="Splash">
         {/* Auth flow */}
         <Stack.Screen name="Splash"       component={SplashScreen} />
         <Stack.Screen name="Language"     component={LanguageScreen} />

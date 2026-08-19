@@ -47,25 +47,25 @@ export default function SOSScreen({ navigation }) {
       {phase === 'sending' && (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={COLORS.sos} />
-          <Text style={styles.statusText}>{tr.sending}</Text>
-          <Text style={styles.subText}>{tr.locationNote}</Text>
+          <AppText style={styles.statusText}>{tr.sending}</AppText>
+          <AppText style={styles.subText}>{tr.locationNote}</AppText>
         </View>
       )}
 
       {phase === 'sent' && (
         <View style={styles.center}>
           <Text style={styles.emoji}>🚨</Text>
-          <Text style={styles.title}>{tr.sentTitle}</Text>
-          <Text style={styles.body}>{tr.sentBody}</Text>
+          <AppText style={styles.title}>{tr.sentTitle}</AppText>
+          <AppText style={styles.body}>{tr.sentBody}</AppText>
           {result?.ticketNumber && (
             <View style={styles.refBox}>
-              <Text style={styles.refLabel}>{tr.ticketLabel}</Text>
-              <Text style={styles.refNum}>{result.ticketNumber}</Text>
+              <AppText style={styles.refLabel}>{tr.ticketLabel}</AppText>
+              <AppText style={styles.refNum}>{result.ticketNumber}</AppText>
             </View>
           )}
           <CallButtons tr={tr} />
-          <TouchableOpacity style={styles.goBtn} onPress={() => navigation.replace('CitizenTabs')}>
-            <Text style={styles.goBtnText}>{tr.goHome}</Text>
+          <TouchableOpacity style={styles.goBtn} onPress={() => navigation.replace('CitizenTabs')} accessibilityLabel={tr.goHome} accessibilityRole="button">
+            <AppText style={styles.goBtnText}>{tr.goHome}</AppText>
           </TouchableOpacity>
         </View>
       )}
@@ -73,11 +73,11 @@ export default function SOSScreen({ navigation }) {
       {phase === 'failed' && (
         <View style={styles.center}>
           <MaterialIcons name="error" size={56} color={COLORS.danger} />
-          <Text style={styles.title}>{tr.failedTitle}</Text>
-          <Text style={styles.body}>{tr.failedBody}</Text>
+          <AppText style={styles.title}>{tr.failedTitle}</AppText>
+          <AppText style={styles.body}>{tr.failedBody}</AppText>
           <CallButtons tr={tr} />
-          <TouchableOpacity style={styles.retryBtn} onPress={sendSOS}>
-            <Text style={styles.retryBtnText}>{tr.retry}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={sendSOS} accessibilityLabel={tr.retry} accessibilityRole="button">
+            <AppText style={styles.retryBtnText}>{tr.retry}</AppText>
           </TouchableOpacity>
         </View>
       )}

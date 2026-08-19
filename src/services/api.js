@@ -135,6 +135,13 @@ export const mediaAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000, // media uploads can take longer
     }),
+  // Standalone photo upload, not tied to a ticket (e.g. a missing-person report photo) —
+  // returns { url } to attach to whatever record needs it.
+  uploadPhoto: (formData) =>
+    api.post('/media/upload-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    }),
 };
 
 export const communityAPI = {
