@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, Alert, RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { userAPI } from '../../services/api';
 
 // Admin-only — search citizens and block/unblock abusive accounts.
 export default function AdminUsersScreen() {
+  const t = useTheme();
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -42,9 +45,9 @@ export default function AdminUsersScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: t.background }]}>
       <View style={styles.headerBar}>
-        <Text style={styles.pageTitle}>👥 Manage Users</Text>
+        <AppText style={styles.pageTitle}>👥 Manage Users</AppText>
         <View style={styles.searchRow}>
           <MaterialIcons name="search" size={20} color="rgba(255,255,255,0.7)" />
           <TextInput
@@ -64,23 +67,23 @@ export default function AdminUsersScreen() {
         data={users}
         keyExtractor={u => u.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={!loading && <Text style={styles.empty}>No users found</Text>}
+        ListEmptyComponent={!loading && <AppText style={[styles.empty, { color: t.textLight }]}>No users found</AppText>}
         renderItem={({ item }) => (
-          <View style={[styles.card, item.is_blocked && styles.cardBlocked]}>
+          <View style={[styles.card, { backgroundColor: t.card }, item.is_blocked && { borderWidth: 1.5, borderColor: t.danger, backgroundColor: '#FFF3F3' }]}>
             <View style={styles.cardTop}>
-              <Text style={styles.name} numberOfLines={1}>{item.full_name}</Text>
+              <AppText style={[styles.name, { color: t.text }]} numberOfLines={1}>{item.full_name}</AppText>
               {item.is_blocked && (
-                <View style={styles.blockedBadge}><Text style={styles.blockedBadgeText}>Blocked</Text></View>
+                <View style={[styles.blockedBadge, { backgroundColor: t.danger }]}><AppText style={styles.blockedBadgeText}>Blocked</AppText></View>
               )}
             </View>
-            <Text style={styles.detail}>📞 {item.mobile}{item.ward ? `  ·  Ward ${item.ward}` : ''}{item.mandal ? `, ${item.mandal}` : ''}</Text>
-            <Text style={styles.date}>Joined: {new Date(item.created_at).toLocaleDateString('en-IN')}</Text>
+            <AppText style={[styles.detail, { color: t.textLight }]}>📞 {item.mobile}{item.ward ? `  ·  Ward ${item.ward}` : ''}{item.mandal ? `, ${item.mandal}` : ''}</AppText>
+            <AppText style={[styles.date, { color: t.textLight }]}>Joined: {new Date(item.created_at).toLocaleDateString('en-IN')}</AppText>
             <TouchableOpacity
-              style={[styles.actionBtn, item.is_blocked ? styles.unblockBtn : styles.blockBtn]}
+              style={[styles.actionBtn, { backgroundColor: item.is_blocked ? t.success : t.danger }]}
               onPress={() => toggleBlock(item)}
             >
               <MaterialIcons name={item.is_blocked ? 'lock-open' : 'block'} size={16} color="#FFF" />
-              <Text style={styles.actionBtnText}>{item.is_blocked ? 'Unblock' : 'Block'}</Text>
+              <AppText style={styles.actionBtnText}>{item.is_blocked ? 'Unblock' : 'Block'}</AppText>
             </TouchableOpacity>
           </View>
         )}

@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { useT } from '../../i18n';
 
 // Self-service "change my password" — any logged-in role. Team leaders/members
 // were only ever given a username+password by whoever created them, with no
@@ -11,6 +14,9 @@ import { useAuthStore } from '../../store/authStore';
 // them uses this screen; needsContactDetails (passed from CompleteTeamAccountScreen,
 // or computed from the stored user record) decides whether those fields show.
 export default function ChangePasswordScreen({ navigation, needsContactDetails: forcedNeedsContactDetails, onDone }) {
+  const t = useTheme();
+  const tr = useT().changePasswordScreen;
+  const trCommon = useT().common;
   const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -28,11 +34,11 @@ export default function ChangePasswordScreen({ navigation, needsContactDetails: 
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (!currentPassword) return Alert.alert('Error', 'Enter your current password');
-    if (!newPassword || newPassword.length < 8) return Alert.alert('Error', 'New password must be at least 8 characters');
+    if (!currentPassword) return Alert.alert(trCommon.error, tr.currentPasswordRequired);
+    if (!newPassword || newPassword.length < 8) return Alert.alert(trCommon.error, tr.newPasswordTooShort);
     if (needsContactDetails) {
-      if (!/^\S+@\S+\.\S+$/.test(email.trim())) return Alert.alert('Error', 'Enter a valid email address');
-      if (!/^\d{10}$/.test(mobile.trim())) return Alert.alert('Error', 'Enter a valid 10-digit mobile number');
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) return Alert.alert(trCommon.error, tr.invalidEmail);
+      if (!/^\d{10}$/.test(mobile.trim())) return Alert.alert(trCommon.error, tr.invalidMobile);
     }
     setLoading(true);
     try {
@@ -43,40 +49,40 @@ export default function ChangePasswordScreen({ navigation, needsContactDetails: 
       if (needsContactDetails) {
         setAuth({ ...user, email: email.trim(), mobile: mobile.trim(), password_set_at: new Date().toISOString() }, token, refreshToken, role);
       }
-      Alert.alert('Success', 'Password updated', [{ text: 'OK', onPress: () => (onDone ? onDone() : navigation.goBack()) }]);
+      Alert.alert(tr.successTitle, tr.successBody, [{ text: 'OK', onPress: () => (onDone ? onDone() : navigation.goBack()) }]);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message || 'Could not update password');
+      Alert.alert(trCommon.error, e.response?.data?.message || tr.updateFailed);
     } finally { setLoading(false); }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.card}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: t.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={[styles.card, { backgroundColor: t.card }]}>
         {needsContactDetails && (
-          <Text style={styles.notice}>Since this is your first time changing your password, please also add your email and mobile number — you'll need them to recover your account later.</Text>
+          <AppText style={[styles.notice, { color: t.textLight }]}>{tr.firstTimeNotice}</AppText>
         )}
         <View style={styles.passwordRow}>
-          <TextInput style={[styles.input, styles.passwordInput]} placeholder="Current password" secureTextEntry={!showCurrent}
+          <TextInput style={[styles.input, styles.passwordInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.currentPasswordPlaceholder} placeholderTextColor={t.textLight} secureTextEntry={!showCurrent}
             value={currentPassword} onChangeText={setCurrentPassword} />
           <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowCurrent(s => !s)} accessibilityLabel={showCurrent ? 'Hide password' : 'Show password'}>
-            <MaterialIcons name={showCurrent ? 'visibility-off' : 'visibility'} size={22} color={COLORS.textLight} />
+            <MaterialIcons name={showCurrent ? 'visibility-off' : 'visibility'} size={22} color={t.textLight} />
           </TouchableOpacity>
         </View>
         <View style={styles.passwordRow}>
-          <TextInput style={[styles.input, styles.passwordInput]} placeholder="New password (8+ characters)" secureTextEntry={!showNew}
+          <TextInput style={[styles.input, styles.passwordInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.newPasswordPlaceholder} placeholderTextColor={t.textLight} secureTextEntry={!showNew}
             value={newPassword} onChangeText={setNewPassword} />
           <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowNew(s => !s)} accessibilityLabel={showNew ? 'Hide password' : 'Show password'}>
-            <MaterialIcons name={showNew ? 'visibility-off' : 'visibility'} size={22} color={COLORS.textLight} />
+            <MaterialIcons name={showNew ? 'visibility-off' : 'visibility'} size={22} color={t.textLight} />
           </TouchableOpacity>
         </View>
         {needsContactDetails && (
           <>
-            <TextInput style={styles.input} placeholder="Email address" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
-            <TextInput style={styles.input} placeholder="Mobile number" keyboardType="phone-pad" maxLength={10} value={mobile} onChangeText={setMobile} />
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.emailPlaceholder} placeholderTextColor={t.textLight} autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.mobilePlaceholder} placeholderTextColor={t.textLight} keyboardType="phone-pad" maxLength={10} value={mobile} onChangeText={setMobile} />
           </>
         )}
-        <TouchableOpacity style={styles.btn} onPress={submit} disabled={loading}>
-          {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>{needsContactDetails ? 'Save & Continue' : 'Update Password'}</Text>}
+        <TouchableOpacity style={[styles.btn, { backgroundColor: t.primary }]} onPress={submit} disabled={loading}>
+          {loading ? <ActivityIndicator color="#FFF" /> : <AppText style={styles.btnText}>{needsContactDetails ? tr.saveAndContinue : tr.updatePassword}</AppText>}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

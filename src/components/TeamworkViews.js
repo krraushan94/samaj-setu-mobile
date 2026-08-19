@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, Alert, Modal, RefreshControl, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants';
+import { useTheme } from '../store/themeStore';
+import AppText from './AppText';
 import { teamworkAPI } from '../services/api';
 
 const STATUS_COLORS = { pending: '#F9A825', in_progress: '#1565C0', completed: '#2E7D32' };
@@ -12,6 +14,7 @@ const PRIORITY_COLORS = { low: '#78909C', medium: '#F57F17', high: '#C62828' };
 // and lets a task be freely reassigned/edited; members can only move status/progress
 // on tasks already assigned to them — enforced again server-side regardless of this UI.
 export function TaskBoard({ departmentId, members, currentUserId, canCreate }) {
+  const t = useTheme();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,34 +60,34 @@ export function TaskBoard({ departmentId, members, currentUserId, canCreate }) {
   return (
     <View style={styles.flex}>
       {canCreate && (
-        <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(true)}>
+        <TouchableOpacity style={[styles.addBtn, { backgroundColor: t.primary }]} onPress={() => setShowForm(true)}>
           <MaterialIcons name="add-task" size={18} color="#FFF" />
-          <Text style={styles.addBtnText}>New Task</Text>
+          <AppText style={styles.addBtnText}>New Task</AppText>
         </TouchableOpacity>
       )}
 
       <FlatList
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         data={tasks}
-        keyExtractor={t => t.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={!loading && <Text style={styles.empty}>No tasks yet</Text>}
+        ListEmptyComponent={!loading && <AppText style={[styles.empty, { color: t.textLight }]}>No tasks yet</AppText>}
         renderItem={({ item }) => (
-          <TouchableOpacity style={[styles.card, isOverdue(item) && styles.cardOverdue]} onPress={() => canEdit(item) && openTask(item)} disabled={!canEdit(item)}>
+          <TouchableOpacity style={[styles.card, { backgroundColor: t.card }, isOverdue(item) && { borderWidth: 1.5, borderColor: t.danger }]} onPress={() => canEdit(item) && openTask(item)} disabled={!canEdit(item)}>
             <View style={styles.cardTop}>
-              <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+              <AppText style={[styles.title, { color: t.text }]} numberOfLines={2}>{item.title}</AppText>
               <View style={[styles.badge, { backgroundColor: STATUS_COLORS[item.status] + '22' }]}>
-                <Text style={[styles.badgeText, { color: STATUS_COLORS[item.status] }]}>{STATUS_LABELS[item.status]}</Text>
+                <AppText style={[styles.badgeText, { color: STATUS_COLORS[item.status] }]}>{STATUS_LABELS[item.status]}</AppText>
               </View>
             </View>
-            {item.description && <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>}
+            {item.description && <AppText style={[styles.desc, { color: t.textLight }]} numberOfLines={2}>{item.description}</AppText>}
             <View style={styles.metaRow}>
-              <Text style={[styles.meta, { color: PRIORITY_COLORS[item.priority] }]}>● {item.priority}</Text>
-              {item.assigned_to_name && <Text style={styles.meta}>👤 {item.assigned_to_name}</Text>}
-              {item.due_date && <Text style={[styles.meta, isOverdue(item) && styles.overdueText]}>📅 {item.due_date}{isOverdue(item) ? ' (overdue)' : ''}</Text>}
-              {item.department_name && <Text style={styles.meta}>🏢 {item.department_name}</Text>}
+              <AppText style={[styles.meta, { color: PRIORITY_COLORS[item.priority] }]}>● {item.priority}</AppText>
+              {item.assigned_to_name && <AppText style={[styles.meta, { color: t.textLight }]}>👤 {item.assigned_to_name}</AppText>}
+              {item.due_date && <AppText style={[styles.meta, { color: t.textLight }, isOverdue(item) && { color: t.danger, fontWeight: '700' }]}>📅 {item.due_date}{isOverdue(item) ? ' (overdue)' : ''}</AppText>}
+              {item.department_name && <AppText style={[styles.meta, { color: t.textLight }]}>🏢 {item.department_name}</AppText>}
             </View>
-            {item.progress_note && <Text style={styles.progressNote}>Note: {item.progress_note}</Text>}
+            {item.progress_note && <AppText style={[styles.progressNote, { color: t.text }]}>Note: {item.progress_note}</AppText>}
           </TouchableOpacity>
         )}
       />
@@ -92,34 +95,34 @@ export function TaskBoard({ departmentId, members, currentUserId, canCreate }) {
       {/* Create task */}
       <Modal visible={showForm} transparent animationType="fade" onRequestClose={() => setShowForm(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>New Task</Text>
-            <TextInput style={styles.input} placeholder="Title *" value={form.title} onChangeText={v => setForm(f => ({ ...f, title: v }))} />
-            <TextInput style={[styles.input, styles.textarea]} placeholder="Description" value={form.description} onChangeText={v => setForm(f => ({ ...f, description: v }))} multiline numberOfLines={2} />
+          <View style={[styles.modalCard, { backgroundColor: t.card }]}>
+            <AppText style={[styles.modalTitle, { color: t.text }]}>New Task</AppText>
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder="Title *" placeholderTextColor={t.textLight} value={form.title} onChangeText={v => setForm(f => ({ ...f, title: v }))} />
+            <TextInput style={[styles.input, styles.textarea, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder="Description" placeholderTextColor={t.textLight} value={form.description} onChangeText={v => setForm(f => ({ ...f, description: v }))} multiline numberOfLines={2} />
             {!!members?.length && (
               <>
-                <Text style={styles.label}>Assign to</Text>
+                <AppText style={[styles.label, { color: t.text }]}>Assign to</AppText>
                 <View style={styles.chipRow}>
                   {members.map(m => (
-                    <TouchableOpacity key={m.id} style={[styles.chip, form.assignedTo === m.id && styles.chipActive]} onPress={() => setForm(f => ({ ...f, assignedTo: f.assignedTo === m.id ? '' : m.id }))}>
-                      <Text style={[styles.chipText, form.assignedTo === m.id && styles.chipTextActive]}>{m.full_name}</Text>
+                    <TouchableOpacity key={m.id} style={[styles.chip, { borderColor: t.border }, form.assignedTo === m.id && { backgroundColor: t.primary, borderColor: t.primary }]} onPress={() => setForm(f => ({ ...f, assignedTo: f.assignedTo === m.id ? '' : m.id }))}>
+                      <AppText style={[styles.chipText, { color: t.text }, form.assignedTo === m.id && styles.chipTextActive]}>{m.full_name}</AppText>
                     </TouchableOpacity>
                   ))}
                 </View>
               </>
             )}
-            <Text style={styles.label}>Priority</Text>
+            <AppText style={[styles.label, { color: t.text }]}>Priority</AppText>
             <View style={styles.chipRow}>
               {['low', 'medium', 'high'].map(p => (
-                <TouchableOpacity key={p} style={[styles.chip, form.priority === p && { backgroundColor: PRIORITY_COLORS[p], borderColor: PRIORITY_COLORS[p] }]} onPress={() => setForm(f => ({ ...f, priority: p }))}>
-                  <Text style={[styles.chipText, form.priority === p && styles.chipTextActive]}>{p}</Text>
+                <TouchableOpacity key={p} style={[styles.chip, { borderColor: t.border }, form.priority === p && { backgroundColor: PRIORITY_COLORS[p], borderColor: PRIORITY_COLORS[p] }]} onPress={() => setForm(f => ({ ...f, priority: p }))}>
+                  <AppText style={[styles.chipText, { color: t.text }, form.priority === p && styles.chipTextActive]}>{p}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
-            <TextInput style={styles.input} placeholder="Due date (YYYY-MM-DD, optional)" value={form.dueDate} onChangeText={v => setForm(f => ({ ...f, dueDate: v }))} />
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder="Due date (YYYY-MM-DD, optional)" placeholderTextColor={t.textLight} value={form.dueDate} onChangeText={v => setForm(f => ({ ...f, dueDate: v }))} />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowForm(false)}><Text style={styles.cancelBtnText}>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.confirmBtn} onPress={submitTask}><Text style={styles.confirmBtnText}>Create</Text></TouchableOpacity>
+              <TouchableOpacity style={[styles.cancelBtn, { borderColor: t.border }]} onPress={() => setShowForm(false)}><AppText style={[styles.cancelBtnText, { color: t.text }]}>Cancel</AppText></TouchableOpacity>
+              <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: t.primary }]} onPress={submitTask}><AppText style={styles.confirmBtnText}>Create</AppText></TouchableOpacity>
             </View>
           </View>
         </View>
@@ -128,17 +131,17 @@ export function TaskBoard({ departmentId, members, currentUserId, canCreate }) {
       {/* Update task status */}
       <Modal visible={!!editing} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{editing?.title}</Text>
-            <TextInput style={[styles.input, styles.textarea]} placeholder="Progress note (optional)" value={progressNote} onChangeText={setProgressNote} multiline numberOfLines={2} />
+          <View style={[styles.modalCard, { backgroundColor: t.card }]}>
+            <AppText style={[styles.modalTitle, { color: t.text }]}>{editing?.title}</AppText>
+            <TextInput style={[styles.input, styles.textarea, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder="Progress note (optional)" placeholderTextColor={t.textLight} value={progressNote} onChangeText={setProgressNote} multiline numberOfLines={2} />
             <View style={styles.statusRow}>
               {['pending', 'in_progress', 'completed'].map(s => (
                 <TouchableOpacity key={s} style={[styles.statusBtn, { borderColor: STATUS_COLORS[s] }, editing?.status === s && { backgroundColor: STATUS_COLORS[s] }]} onPress={() => updateStatus(s)}>
-                  <Text style={[styles.statusBtnText, { color: editing?.status === s ? '#FFF' : STATUS_COLORS[s] }]}>{STATUS_LABELS[s]}</Text>
+                  <AppText style={[styles.statusBtnText, { color: editing?.status === s ? '#FFF' : STATUS_COLORS[s] }]}>{STATUS_LABELS[s]}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditing(null)}><Text style={styles.cancelBtnText}>Close</Text></TouchableOpacity>
+            <TouchableOpacity style={[styles.cancelBtn, { borderColor: t.border }]} onPress={() => setEditing(null)}><AppText style={[styles.cancelBtnText, { color: t.text }]}>Close</AppText></TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -149,6 +152,7 @@ export function TaskBoard({ departmentId, members, currentUserId, canCreate }) {
 // Group chat for one department — polls every 8s while mounted since Render's free
 // tier sleeps idle connections, so a real WebSocket wouldn't stay open reliably anyway.
 export function ChatPanel({ departmentId, currentUserId }) {
+  const t = useTheme();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -183,23 +187,23 @@ export function ChatPanel({ departmentId, currentUserId }) {
       <FlatList
         ref={listRef}
         data={messages}
-        keyExtractor={m => m.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.chatList}
-        ListEmptyComponent={!loading && <Text style={styles.empty}>No messages yet — say hello 👋</Text>}
+        ListEmptyComponent={!loading && <AppText style={[styles.empty, { color: t.textLight }]}>No messages yet — say hello 👋</AppText>}
         renderItem={({ item }) => {
           const mine = item.sender_id === currentUserId;
           return (
-            <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}>
-              {!mine && <Text style={styles.bubbleSender}>{item.sender_name} · {item.sender_role}</Text>}
-              <Text style={[styles.bubbleText, mine && { color: '#FFF' }]}>{item.message}</Text>
-              <Text style={[styles.bubbleTime, mine && { color: 'rgba(255,255,255,0.7)' }]}>{new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</Text>
+            <View style={[styles.bubble, mine ? { backgroundColor: t.primary, alignSelf: 'flex-end' } : { backgroundColor: t.card, alignSelf: 'flex-start', elevation: 1 }]}>
+              {!mine && <AppText style={[styles.bubbleSender, { color: t.primary }]}>{item.sender_name} · {item.sender_role}</AppText>}
+              <AppText style={[styles.bubbleText, { color: t.text }, mine && { color: '#FFF' }]}>{item.message}</AppText>
+              <AppText style={[styles.bubbleTime, { color: t.textLight }, mine && { color: 'rgba(255,255,255,0.7)' }]}>{new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</AppText>
             </View>
           );
         }}
       />
-      <View style={styles.composerRow}>
-        <TextInput style={styles.composerInput} placeholder="Message your team…" value={text} onChangeText={setText} multiline />
-        <TouchableOpacity style={styles.sendBtn} onPress={send} testID="send-message-btn">
+      <View style={[styles.composerRow, { backgroundColor: t.card, borderColor: t.border }]}>
+        <TextInput style={[styles.composerInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder="Message your team…" placeholderTextColor={t.textLight} value={text} onChangeText={setText} multiline />
+        <TouchableOpacity style={[styles.sendBtn, { backgroundColor: t.primary }]} onPress={send} testID="send-message-btn">
           <MaterialIcons name="send" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>

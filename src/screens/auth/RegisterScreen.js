@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useT } from '../../i18n';
@@ -12,6 +14,7 @@ const STEP_PROFILE  = 2;
 const STEP_LOCATION = 3;
 
 export default function RegisterScreen({ navigation }) {
+  const t = useTheme();
   const setAuth  = useAuthStore((s) => s.setAuth);
   const tr       = useT().register;
   const trCommon = useT().common;
@@ -81,99 +84,99 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: t.background }]} keyboardShouldPersistTaps="handled">
       {/* Progress bar */}
       <View style={styles.progress}>
-        {[0,1,2,3].map(i => <View key={i} style={[styles.dot, i <= step && styles.dotActive]} />)}
+        {[0,1,2,3].map(i => <View key={i} style={[styles.dot, { backgroundColor: t.border }, i <= step && { backgroundColor: t.primary }]} />)}
       </View>
 
       {step === STEP_OTP && (
-        <View style={styles.card}>
-          <Text style={styles.title}>{tr.mobileTitle}</Text>
-          <Text style={styles.sub}>{tr.mobileSub}</Text>
-          <TextInput style={styles.input} placeholder={tr.mobilePlaceholder} keyboardType="phone-pad"
+        <View style={[styles.card, { backgroundColor: t.card }]}>
+          <AppText style={[styles.title, { color: t.text }]}>{tr.mobileTitle}</AppText>
+          <AppText style={[styles.sub, { color: t.textLight }]}>{tr.mobileSub}</AppText>
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.mobilePlaceholder} placeholderTextColor={t.textLight} keyboardType="phone-pad"
             maxLength={10} value={form.mobile} onChangeText={v => set('mobile', v)} />
-          <Btn title={tr.sendOtp} onPress={sendOtp} loading={loading} />
+          <Btn title={tr.sendOtp} onPress={sendOtp} loading={loading} theme={t} />
         </View>
       )}
 
       {step === STEP_VERIFY && (
-        <View style={styles.card}>
-          <Text style={styles.title}>{tr.otpTitle}</Text>
-          <Text style={styles.sub}>{tr.otpSentTo}{form.mobile}</Text>
-          <TextInput style={[styles.input, styles.otpInput]} placeholder={tr.otpPlaceholder} keyboardType="number-pad"
+        <View style={[styles.card, { backgroundColor: t.card }]}>
+          <AppText style={[styles.title, { color: t.text }]}>{tr.otpTitle}</AppText>
+          <AppText style={[styles.sub, { color: t.textLight }]}>{tr.otpSentTo}{form.mobile}</AppText>
+          <TextInput style={[styles.input, styles.otpInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.otpPlaceholder} placeholderTextColor={t.textLight} keyboardType="number-pad"
             maxLength={6} value={form.otp} onChangeText={v => set('otp', v)} />
-          <Btn title={tr.verifyOtp} onPress={verifyOtp} loading={loading} />
-          <TouchableOpacity onPress={sendOtp}><Text style={styles.resend}>{tr.resendOtp}</Text></TouchableOpacity>
+          <Btn title={tr.verifyOtp} onPress={verifyOtp} loading={loading} theme={t} />
+          <TouchableOpacity onPress={sendOtp}><AppText style={[styles.resend, { color: t.secondary }]}>{tr.resendOtp}</AppText></TouchableOpacity>
         </View>
       )}
 
       {step === STEP_PROFILE && (
-        <View style={styles.card}>
-          <Text style={styles.title}>{tr.profileTitle}</Text>
-          <TextInput style={styles.input} placeholder={tr.firstName} value={form.firstName} onChangeText={v => set('firstName', v)} />
-          <TextInput style={styles.input} placeholder={tr.lastName} value={form.lastName} onChangeText={v => set('lastName', v)} />
-          <TextInput style={styles.input} placeholder={tr.email} keyboardType="email-address" value={form.email} onChangeText={v => set('email', v)} />
+        <View style={[styles.card, { backgroundColor: t.card }]}>
+          <AppText style={[styles.title, { color: t.text }]}>{tr.profileTitle}</AppText>
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.firstName} placeholderTextColor={t.textLight} value={form.firstName} onChangeText={v => set('firstName', v)} />
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.lastName} placeholderTextColor={t.textLight} value={form.lastName} onChangeText={v => set('lastName', v)} />
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.email} placeholderTextColor={t.textLight} keyboardType="email-address" value={form.email} onChangeText={v => set('email', v)} />
           <View style={styles.passwordRow}>
-            <TextInput style={[styles.input, styles.passwordInput]} placeholder={tr.password} secureTextEntry={!showPassword} value={form.password} onChangeText={v => set('password', v)} />
+            <TextInput style={[styles.input, styles.passwordInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.password} placeholderTextColor={t.textLight} secureTextEntry={!showPassword} value={form.password} onChangeText={v => set('password', v)} />
             <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(s => !s)} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
-              <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={22} color={COLORS.textLight} />
+              <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={22} color={t.textLight} />
             </TouchableOpacity>
           </View>
-          <Text style={styles.label}>{tr.gender}</Text>
+          <AppText style={[styles.label, { color: t.text }]}>{tr.gender}</AppText>
           <View style={styles.row}>
             {[
               { key: 'male',   label: tr.male },
               { key: 'female', label: tr.female },
               { key: 'other',  label: tr.other },
             ].map(g => (
-              <TouchableOpacity key={g.key} style={[styles.chip, form.gender===g.key && styles.chipActive]} onPress={() => set('gender', g.key)}>
-                <Text style={[styles.chipText, form.gender===g.key && styles.chipTextActive]}>{g.label}</Text>
+              <TouchableOpacity key={g.key} style={[styles.chip, { borderColor: t.border }, form.gender===g.key && { backgroundColor: t.primary, borderColor: t.primary }]} onPress={() => set('gender', g.key)}>
+                <AppText style={[styles.chipText, { color: t.text }, form.gender===g.key && styles.chipTextActive]}>{g.label}</AppText>
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={styles.label}>{tr.ageGroup}</Text>
+          <AppText style={[styles.label, { color: t.text }]}>{tr.ageGroup}</AppText>
           <View style={styles.row}>
             {['Under 18','18-35','36-60','60+'].map(ag => (
-              <TouchableOpacity key={ag} style={[styles.chip, form.ageGroup===ag && styles.chipActive]} onPress={() => set('ageGroup', ag)}>
-                <Text style={[styles.chipText, form.ageGroup===ag && styles.chipTextActive]}>{ag}</Text>
+              <TouchableOpacity key={ag} style={[styles.chip, { borderColor: t.border }, form.ageGroup===ag && { backgroundColor: t.primary, borderColor: t.primary }]} onPress={() => set('ageGroup', ag)}>
+                <AppText style={[styles.chipText, { color: t.text }, form.ageGroup===ag && styles.chipTextActive]}>{ag}</AppText>
               </TouchableOpacity>
             ))}
           </View>
           <TouchableOpacity style={styles.caregiverRow} onPress={() => set('isCaregiverSignup', !form.isCaregiverSignup)}>
-            <View style={[styles.checkbox, form.isCaregiverSignup && styles.checkboxActive]} />
-            <Text style={styles.caregiverText}>I'm registering this account on behalf of an elderly family member</Text>
+            <View style={[styles.checkbox, { borderColor: t.border }, form.isCaregiverSignup && { backgroundColor: t.primary, borderColor: t.primary }]} />
+            <AppText style={[styles.caregiverText, { color: t.textLight }]}>I'm registering this account on behalf of an elderly family member</AppText>
           </TouchableOpacity>
           {form.isCaregiverSignup && (
             <>
-              <TextInput style={styles.input} placeholder="Caregiver Full Name" value={form.caregiverName} onChangeText={v => set('caregiverName', v)} />
-              <TextInput style={styles.input} placeholder="Caregiver Mobile Number" keyboardType="phone-pad" maxLength={10} value={form.caregiverMobile} onChangeText={v => set('caregiverMobile', v)} />
+              <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder="Caregiver Full Name" placeholderTextColor={t.textLight} value={form.caregiverName} onChangeText={v => set('caregiverName', v)} />
+              <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder="Caregiver Mobile Number" placeholderTextColor={t.textLight} keyboardType="phone-pad" maxLength={10} value={form.caregiverMobile} onChangeText={v => set('caregiverMobile', v)} />
             </>
           )}
-          <Btn title={tr.nextBtn} onPress={() => setStep(STEP_LOCATION)} />
+          <Btn title={tr.nextBtn} onPress={() => setStep(STEP_LOCATION)} theme={t} />
         </View>
       )}
 
       {step === STEP_LOCATION && (
-        <View style={styles.card}>
-          <Text style={styles.title}>{tr.locationTitle}</Text>
-          <TextInput style={styles.input} placeholder={tr.pincode} keyboardType="number-pad" maxLength={6} value={form.pincode} onChangeText={v => set('pincode', v)} />
-          <TextInput style={styles.input} placeholder={tr.mandal} value={form.mandal} onChangeText={v => set('mandal', v)} />
-          <TextInput style={styles.input} placeholder={tr.ward} value={form.ward} onChangeText={v => set('ward', v)} />
-          <TextInput style={styles.input} placeholder={tr.colony} value={form.colony} onChangeText={v => set('colony', v)} />
-          <Text style={styles.idNote}>{tr.idNote || 'Aadhaar number or Voter ID is required — at least one:'}</Text>
-          <TextInput style={styles.input} placeholder={tr.aadharNumber} keyboardType="number-pad" maxLength={12} value={form.aadharNumber} onChangeText={v => set('aadharNumber', v)} />
-          <TextInput style={styles.input} placeholder={tr.voterIdNumber} value={form.voterIdNumber} onChangeText={v => set('voterIdNumber', v.toUpperCase())} autoCapitalize="characters" />
-          <Btn title={tr.createAccount} onPress={complete} loading={loading} />
+        <View style={[styles.card, { backgroundColor: t.card }]}>
+          <AppText style={[styles.title, { color: t.text }]}>{tr.locationTitle}</AppText>
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.pincode} placeholderTextColor={t.textLight} keyboardType="number-pad" maxLength={6} value={form.pincode} onChangeText={v => set('pincode', v)} />
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.mandal} placeholderTextColor={t.textLight} value={form.mandal} onChangeText={v => set('mandal', v)} />
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.ward} placeholderTextColor={t.textLight} value={form.ward} onChangeText={v => set('ward', v)} />
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.colony} placeholderTextColor={t.textLight} value={form.colony} onChangeText={v => set('colony', v)} />
+          <AppText style={[styles.idNote, { color: t.textLight }]}>{tr.idNote || 'Aadhaar number or Voter ID is required — at least one:'}</AppText>
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.aadharNumber} placeholderTextColor={t.textLight} keyboardType="number-pad" maxLength={12} value={form.aadharNumber} onChangeText={v => set('aadharNumber', v)} />
+          <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.voterIdNumber} placeholderTextColor={t.textLight} value={form.voterIdNumber} onChangeText={v => set('voterIdNumber', v.toUpperCase())} autoCapitalize="characters" />
+          <Btn title={tr.createAccount} onPress={complete} loading={loading} theme={t} />
         </View>
       )}
     </ScrollView>
   );
 }
 
-const Btn = ({ title, onPress, loading }) => (
-  <TouchableOpacity style={styles.btn} onPress={onPress} disabled={loading}>
-    {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>{title}</Text>}
+const Btn = ({ title, onPress, loading, theme }) => (
+  <TouchableOpacity style={[styles.btn, { backgroundColor: theme.primary }]} onPress={onPress} disabled={loading}>
+    {loading ? <ActivityIndicator color="#FFF" /> : <AppText style={styles.btnText}>{title}</AppText>}
   </TouchableOpacity>
 );
 

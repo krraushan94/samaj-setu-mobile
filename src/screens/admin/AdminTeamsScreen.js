@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { departmentAPI, adminAPI } from '../../services/api';
 
 // Admin-only Team management — only Admin_Raushan can create, reset the password for, or
 // deactivate a Team Leader or member. There is no public "apply" flow anywhere in the app.
 export default function AdminTeamsScreen() {
+  const t = useTheme();
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formDept, setFormDept] = useState(null);
@@ -62,34 +65,34 @@ export default function AdminTeamsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.body}>
-      <Text style={styles.intro}>Only Admin_Raushan can add or remove Team Leaders / members — there's no public application flow.</Text>
+    <ScrollView style={[styles.container, { backgroundColor: th.background }]} contentContainerStyle={styles.body}>
+      <AppText style={[styles.intro, { color: th.textLight }]}>Only Admin_Raushan can add or remove Team Leaders / members — there's no public application flow.</AppText>
 
       {departments.map(dept => (
-        <View key={dept.id} style={styles.deptCard}>
+        <View key={dept.id} style={[styles.deptCard, { backgroundColor: th.card }]}>
           <View style={styles.deptHeader}>
-            <Text style={styles.deptName}>{dept.name}</Text>
+            <AppText style={styles.deptName}>{dept.name}</AppText>
             <TouchableOpacity style={styles.addBtn} onPress={() => setFormDept(dept)}>
               <MaterialIcons name="person-add" size={16} color="#FFF" />
-              <Text style={styles.addBtnText}>Add</Text>
+              <AppText style={styles.addBtnText}>Add</AppText>
             </TouchableOpacity>
           </View>
           {(dept.members || []).filter(Boolean).length === 0 ? (
-            <Text style={styles.empty}>No team members yet.</Text>
+            <AppText style={[styles.empty, { color: th.textLight }]}>No team members yet.</AppText>
           ) : (
             (dept.members || []).filter(Boolean).map(m => (
-              <View key={m.id} style={styles.memberRow}>
+              <View key={m.id} style={[styles.memberRow, { borderTopColor: th.border }]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.memberName}>{m.full_name} <Text style={styles.memberRole}>({m.role})</Text></Text>
-                  <Text style={styles.memberUser}>@{m.username} — {m.is_active ? 'Active' : 'Deactivated'}</Text>
+                  <AppText style={[styles.memberName, { color: th.text }]}>{m.full_name} <AppText style={[styles.memberRole, { color: th.textLight }]}>({m.role})</AppText></AppText>
+                  <AppText style={[styles.memberUser, { color: th.textLight }]}>@{m.username} — {m.is_active ? 'Active' : 'Deactivated'}</AppText>
                 </View>
                 {m.is_active && (
                   <View style={{ flexDirection: 'row', gap: 16 }}>
                     <TouchableOpacity onPress={() => { setResetTarget(m); setNewPassword(''); }} accessibilityLabel={`Reset password for ${m.full_name}`}>
-                      <MaterialIcons name="lock-reset" size={20} color={COLORS.secondary} />
+                      <MaterialIcons name="lock-reset" size={20} color={th.secondary} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => deactivate(m.id)} accessibilityLabel={`Deactivate ${m.full_name}`}>
-                      <MaterialIcons name="person-remove" size={20} color={COLORS.danger} />
+                      <MaterialIcons name="person-remove" size={20} color={th.danger} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -101,21 +104,21 @@ export default function AdminTeamsScreen() {
 
       <Modal visible={!!formDept} transparent animationType="fade" onRequestClose={() => setFormDept(null)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Add to {formDept?.name}</Text>
-            <TextInput style={styles.input} placeholder="Full Name" value={form.fullName} onChangeText={v => setForm(f => ({ ...f, fullName: v }))} />
-            <TextInput style={styles.input} placeholder="Username" value={form.username} onChangeText={v => setForm(f => ({ ...f, username: v }))} autoCapitalize="none" />
-            <TextInput style={styles.input} placeholder="Password (8+ characters)" secureTextEntry value={form.password} onChangeText={v => setForm(f => ({ ...f, password: v }))} />
+          <View style={[styles.modalCard, { backgroundColor: th.card }]}>
+            <AppText style={[styles.modalTitle, { color: th.text }]}>Add to {formDept?.name}</AppText>
+            <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} placeholder="Full Name" value={form.fullName} onChangeText={v => setForm(f => ({ ...f, fullName: v }))} />
+            <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} placeholder="Username" value={form.username} onChangeText={v => setForm(f => ({ ...f, username: v }))} autoCapitalize="none" />
+            <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} placeholder="Password (8+ characters)" secureTextEntry value={form.password} onChangeText={v => setForm(f => ({ ...f, password: v }))} />
             <View style={styles.roleRow}>
               {['leader', 'member'].map(r => (
-                <TouchableOpacity key={r} style={[styles.roleChip, form.role === r && styles.roleChipActive]} onPress={() => setForm(f => ({ ...f, role: r }))}>
-                  <Text style={[styles.roleChipText, form.role === r && styles.roleChipTextActive]}>{r === 'leader' ? 'Team Leader' : 'Member'}</Text>
+                <TouchableOpacity key={r} style={[styles.roleChip, { borderColor: th.border }, form.role === r && { backgroundColor: th.primary, borderColor: th.primary }]} onPress={() => setForm(f => ({ ...f, role: r }))}>
+                  <AppText style={[styles.roleChipText, { color: th.text }, form.role === r && styles.roleChipTextActive]}>{r === 'leader' ? 'Team Leader' : 'Member'}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setFormDept(null)}><Text>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.createBtn} onPress={submitMember}><Text style={styles.createBtnText}>Create</Text></TouchableOpacity>
+              <TouchableOpacity style={[styles.cancelBtn, { borderColor: th.border }]} onPress={() => setFormDept(null)}><AppText style={{ color: th.text }}>Cancel</AppText></TouchableOpacity>
+              <TouchableOpacity style={[styles.createBtn, { backgroundColor: th.primary }]} onPress={submitMember}><AppText style={styles.createBtnText}>Create</AppText></TouchableOpacity>
             </View>
           </View>
         </View>
@@ -123,12 +126,12 @@ export default function AdminTeamsScreen() {
 
       <Modal visible={!!resetTarget} transparent animationType="fade" onRequestClose={() => setResetTarget(null)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Reset Password — {resetTarget?.full_name}</Text>
-            <TextInput style={styles.input} placeholder="New password (8+ characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
+          <View style={[styles.modalCard, { backgroundColor: th.card }]}>
+            <AppText style={[styles.modalTitle, { color: th.text }]}>Reset Password — {resetTarget?.full_name}</AppText>
+            <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} placeholder="New password (8+ characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setResetTarget(null)}><Text>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.createBtn} onPress={submitReset}><Text style={styles.createBtnText}>Reset</Text></TouchableOpacity>
+              <TouchableOpacity style={[styles.cancelBtn, { borderColor: th.border }]} onPress={() => setResetTarget(null)}><AppText style={{ color: th.text }}>Cancel</AppText></TouchableOpacity>
+              <TouchableOpacity style={[styles.createBtn, { backgroundColor: th.primary }]} onPress={submitReset}><AppText style={styles.createBtnText}>Reset</AppText></TouchableOpacity>
             </View>
           </View>
         </View>

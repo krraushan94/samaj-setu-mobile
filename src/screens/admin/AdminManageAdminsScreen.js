@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { adminAPI } from '../../services/api';
 
 const MAX_TOTAL_ADMINS = 6; // Admin_Raushan + up to 5 more
@@ -10,6 +12,7 @@ const MAX_TOTAL_ADMINS = 6; // Admin_Raushan + up to 5 more
 // payments, no managing other admins). This screen isn't reachable for a sub-admin —
 // the backend also enforces this independently via requirePrimaryAdmin.
 export default function AdminManageAdminsScreen() {
+  const t = useTheme();
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -71,38 +74,38 @@ export default function AdminManageAdminsScreen() {
   const atCapacity = slotsUsed >= MAX_TOTAL_ADMINS;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.body}>
-      <Text style={styles.intro}>
+    <ScrollView style={[styles.container, { backgroundColor: t.background }]} contentContainerStyle={styles.body}>
+      <AppText style={[styles.intro, { color: t.textLight }]}>
         Admin_Raushan can add up to {MAX_TOTAL_ADMINS - 1} more admins ({slotsUsed}/{MAX_TOTAL_ADMINS} used).
         Sub-admins can manage Team Leaders, Members, tickets and community moderation — but not payments,
         raw data export, or other admin accounts.
-      </Text>
+      </AppText>
 
       <TouchableOpacity
-        style={[styles.addBtn, atCapacity && styles.addBtnDisabled]}
+        style={[styles.addBtn, atCapacity && { backgroundColor: t.border }]}
         disabled={atCapacity}
         onPress={() => { setShowAdd(true); setError(''); }}
       >
         <MaterialIcons name="person-add" size={18} color="#FFF" />
-        <Text style={styles.addBtnText}>{atCapacity ? 'Maximum admins reached' : 'Add Admin'}</Text>
+        <AppText style={styles.addBtnText}>{atCapacity ? 'Maximum admins reached' : 'Add Admin'}</AppText>
       </TouchableOpacity>
 
       {!loading && admins.map(a => (
-        <View key={a.id} style={styles.card}>
+        <View key={a.id} style={[styles.card, { backgroundColor: t.card }]}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.name}>
-              {a.full_name} {a.username === 'Admin_Raushan' && <Text style={styles.primaryTag}>(Primary)</Text>}
-            </Text>
-            <Text style={styles.username}>@{a.username} — {a.is_active ? 'Active' : 'Deactivated'}</Text>
-            {a.email && <Text style={styles.email}>{a.email}</Text>}
+            <AppText style={[styles.name, { color: t.text }]}>
+              {a.full_name} {a.username === 'Admin_Raushan' && <AppText style={[styles.primaryTag, { color: t.secondary }]}>(Primary)</AppText>}
+            </AppText>
+            <AppText style={[styles.username, { color: t.textLight }]}>@{a.username} — {a.is_active ? 'Active' : 'Deactivated'}</AppText>
+            {a.email && <AppText style={[styles.email, { color: t.textLight }]}>{a.email}</AppText>}
           </View>
           {a.username !== 'Admin_Raushan' && (
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <TouchableOpacity onPress={() => { setResetTarget(a); setNewPassword(''); }} accessibilityLabel={`Reset password for ${a.full_name}`}>
-                <MaterialIcons name="lock-reset" size={20} color={COLORS.secondary} />
+                <MaterialIcons name="lock-reset" size={20} color={t.secondary} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => toggleActive(a)} accessibilityLabel={`${a.is_active ? 'Deactivate' : 'Reactivate'} ${a.full_name}`}>
-                <MaterialIcons name={a.is_active ? 'person-remove' : 'person-add'} size={20} color={a.is_active ? COLORS.danger : COLORS.success} />
+                <MaterialIcons name={a.is_active ? 'person-remove' : 'person-add'} size={20} color={a.is_active ? t.danger : t.success} />
               </TouchableOpacity>
             </View>
           )}
@@ -111,16 +114,16 @@ export default function AdminManageAdminsScreen() {
 
       <Modal visible={showAdd} transparent animationType="fade" onRequestClose={() => setShowAdd(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Add Admin</Text>
-            <TextInput style={styles.input} placeholder="Full Name" value={form.fullName} onChangeText={v => setForm(f => ({ ...f, fullName: v }))} />
-            <TextInput style={styles.input} placeholder="Username" value={form.username} onChangeText={v => setForm(f => ({ ...f, username: v }))} autoCapitalize="none" />
-            <TextInput style={styles.input} placeholder="Email (optional)" value={form.email} onChangeText={v => setForm(f => ({ ...f, email: v }))} autoCapitalize="none" keyboardType="email-address" />
-            <TextInput style={styles.input} placeholder="Password (8+ characters)" secureTextEntry value={form.password} onChangeText={v => setForm(f => ({ ...f, password: v }))} />
-            {error && <Text style={styles.error}>{error}</Text>}
+          <View style={[styles.modalCard, { backgroundColor: t.card }]}>
+            <AppText style={[styles.modalTitle, { color: t.text }]}>Add Admin</AppText>
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholderTextColor={t.textLight} placeholder="Full Name" value={form.fullName} onChangeText={v => setForm(f => ({ ...f, fullName: v }))} />
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholderTextColor={t.textLight} placeholder="Username" value={form.username} onChangeText={v => setForm(f => ({ ...f, username: v }))} autoCapitalize="none" />
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholderTextColor={t.textLight} placeholder="Email (optional)" value={form.email} onChangeText={v => setForm(f => ({ ...f, email: v }))} autoCapitalize="none" keyboardType="email-address" />
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholderTextColor={t.textLight} placeholder="Password (8+ characters)" secureTextEntry value={form.password} onChangeText={v => setForm(f => ({ ...f, password: v }))} />
+            {error && <AppText style={styles.error}>{error}</AppText>}
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowAdd(false)}><Text>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.createBtn} onPress={submitAdd}><Text style={styles.createBtnText}>Create</Text></TouchableOpacity>
+              <TouchableOpacity style={[styles.cancelBtn, { borderColor: t.border }]} onPress={() => setShowAdd(false)}><AppText style={{ color: t.text }}>Cancel</AppText></TouchableOpacity>
+              <TouchableOpacity style={[styles.createBtn, { backgroundColor: t.primary }]} onPress={submitAdd}><AppText style={styles.createBtnText}>Create</AppText></TouchableOpacity>
             </View>
           </View>
         </View>
@@ -128,12 +131,12 @@ export default function AdminManageAdminsScreen() {
 
       <Modal visible={!!resetTarget} transparent animationType="fade" onRequestClose={() => setResetTarget(null)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Reset Password — {resetTarget?.full_name}</Text>
-            <TextInput style={styles.input} placeholder="New password (8+ characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
+          <View style={[styles.modalCard, { backgroundColor: t.card }]}>
+            <AppText style={[styles.modalTitle, { color: t.text }]}>Reset Password — {resetTarget?.full_name}</AppText>
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholderTextColor={t.textLight} placeholder="New password (8+ characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setResetTarget(null)}><Text>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.createBtn} onPress={submitReset}><Text style={styles.createBtnText}>Reset</Text></TouchableOpacity>
+              <TouchableOpacity style={[styles.cancelBtn, { borderColor: t.border }]} onPress={() => setResetTarget(null)}><AppText style={{ color: t.text }}>Cancel</AppText></TouchableOpacity>
+              <TouchableOpacity style={[styles.createBtn, { backgroundColor: t.primary }]} onPress={submitReset}><AppText style={styles.createBtnText}>Reset</AppText></TouchableOpacity>
             </View>
           </View>
         </View>

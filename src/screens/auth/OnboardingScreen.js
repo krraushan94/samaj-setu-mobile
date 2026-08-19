@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { useT } from '../../i18n';
 
 const { width } = Dimensions.get('window');
@@ -8,6 +10,7 @@ const { width } = Dimensions.get('window');
 const SLIDE_EMOJIS = ['📢', '🎯', '🔍', '🤝'];
 
 export default function OnboardingScreen({ navigation }) {
+  const t = useTheme();
   const tr = useT().onboarding;
   const [index, setIndex] = useState(0);
   const flatRef = useRef(null);
@@ -24,9 +27,9 @@ export default function OnboardingScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: t.background }]}>
       <TouchableOpacity style={styles.skip} onPress={() => navigation.replace('Welcome')}>
-        <Text style={styles.skipText}>{tr.skip}</Text>
+        <AppText style={[styles.skipText, { color: t.textLight }]}>{tr.skip}</AppText>
       </TouchableOpacity>
 
       <FlatList
@@ -38,20 +41,20 @@ export default function OnboardingScreen({ navigation }) {
         renderItem={({ item }) => (
           <View style={styles.slide}>
             <Text style={styles.emoji}>{item.emoji}</Text>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.subtitle}>{item.subtitle}</Text>
+            <AppText style={[styles.title, { color: t.text }]}>{item.title}</AppText>
+            <AppText style={[styles.subtitle, { color: t.textLight }]}>{item.subtitle}</AppText>
           </View>
         )}
       />
 
       <View style={styles.dots}>
         {slides.map((_, i) => (
-          <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
+          <View key={i} style={[styles.dot, { backgroundColor: t.border }, i === index && { backgroundColor: t.primary, width: 24 }]} />
         ))}
       </View>
 
-      <TouchableOpacity style={styles.btn} onPress={next}>
-        <Text style={styles.btnText}>{index === slides.length - 1 ? tr.letsStart : tr.next}</Text>
+      <TouchableOpacity style={[styles.btn, { backgroundColor: t.primary }]} onPress={next}>
+        <AppText style={styles.btnText}>{index === slides.length - 1 ? tr.letsStart : tr.next}</AppText>
       </TouchableOpacity>
     </View>
   );

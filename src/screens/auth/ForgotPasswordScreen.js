@@ -2,14 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { useT } from '../../i18n';
 
 // Universal forgot-password — works for citizens, team leaders/members, and admin
 // alike. The identifier can be a mobile number (OTP, same SMS path as registration)
 // or an email address (a code emailed to that address) — auto-detected, and the
 // server itself figures out which account (if any) actually matches it.
 export default function ForgotPasswordScreen({ navigation }) {
+  const t = useTheme();
+  const tr = useT().forgotPasswordScreen;
+  const trCommon = useT().common;
   const setAuth = useAuthStore((s) => s.setAuth);
   const [step, setStep] = useState('request'); // request | reset
   const [identifier, setIdentifier] = useState('');
@@ -22,19 +28,19 @@ export default function ForgotPasswordScreen({ navigation }) {
   const isEmail = /^\S+@\S+\.\S+$/.test(identifier.trim());
 
   const requestCode = async () => {
-    if (!isMobile && !isEmail) return Alert.alert('Error', 'Enter a valid 10-digit mobile number or email address');
+    if (!isMobile && !isEmail) return Alert.alert(trCommon.error, tr.invalidIdentifier);
     setLoading(true);
     try {
       await authAPI.forgotPassword(identifier.trim());
       setStep('reset');
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message || 'Something went wrong');
+      Alert.alert(trCommon.error, e.response?.data?.message || tr.genericError);
     } finally { setLoading(false); }
   };
 
   const resetPassword = async () => {
-    if (!code || !newPassword) return Alert.alert('Error', 'Enter the code and a new password');
-    if (newPassword.length < 8) return Alert.alert('Error', 'Password must be at least 8 characters');
+    if (!code || !newPassword) return Alert.alert(trCommon.error, tr.codeAndPasswordRequired);
+    if (newPassword.length < 8) return Alert.alert(trCommon.error, tr.passwordTooShort);
     setLoading(true);
     try {
       const { data } = await authAPI.resetPassword(identifier.trim(), code, newPassword);
@@ -43,45 +49,45 @@ export default function ForgotPasswordScreen({ navigation }) {
       if (data.role === 'leader' || data.role === 'member') return navigation.replace('TeamTabs');
       navigation.replace('CitizenTabs');
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message || 'Could not reset password');
+      Alert.alert(trCommon.error, e.response?.data?.message || tr.resetFailed);
     } finally { setLoading(false); }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: t.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
         <Text style={styles.emoji}>🔑</Text>
-        <Text style={styles.title}>Forgot Password</Text>
-        <Text style={styles.sub}>{step === 'request' ? 'A code will be sent to your mobile or email' : 'Enter the code and a new password'}</Text>
+        <AppText style={[styles.title, { color: t.text }]}>{tr.title}</AppText>
+        <AppText style={[styles.sub, { color: t.textLight }]}>{step === 'request' ? tr.subRequest : tr.subReset}</AppText>
       </View>
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: t.card }]}>
         {step === 'request' ? (
           <>
-            <TextInput style={styles.input} placeholder="Mobile number or email" autoCapitalize="none" keyboardType="email-address"
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.identifierPlaceholder} placeholderTextColor={t.textLight} autoCapitalize="none" keyboardType="email-address"
               value={identifier} onChangeText={setIdentifier} />
-            <TouchableOpacity style={styles.btn} onPress={requestCode} disabled={loading}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Send Code</Text>}
+            <TouchableOpacity style={[styles.btn, { backgroundColor: t.primary }]} onPress={requestCode} disabled={loading}>
+              {loading ? <ActivityIndicator color="#FFF" /> : <AppText style={styles.btnText}>{tr.sendCode}</AppText>}
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <TextInput style={[styles.input, styles.codeInput]} placeholder="6-digit code" keyboardType="number-pad" maxLength={6} value={code} onChangeText={setCode} />
+            <TextInput style={[styles.input, styles.codeInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.codePlaceholder} placeholderTextColor={t.textLight} keyboardType="number-pad" maxLength={6} value={code} onChangeText={setCode} />
             <View style={styles.passwordRow}>
-              <TextInput style={[styles.input, styles.passwordInput]} placeholder="New password (8+ characters)" secureTextEntry={!showPassword} value={newPassword} onChangeText={setNewPassword} />
+              <TextInput style={[styles.input, styles.passwordInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.newPasswordPlaceholder} placeholderTextColor={t.textLight} secureTextEntry={!showPassword} value={newPassword} onChangeText={setNewPassword} />
               <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(s => !s)} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
-                <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={22} color={COLORS.textLight} />
+                <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={22} color={t.textLight} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.btn} onPress={resetPassword} disabled={loading}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Reset Password</Text>}
+            <TouchableOpacity style={[styles.btn, { backgroundColor: t.primary }]} onPress={resetPassword} disabled={loading}>
+              {loading ? <ActivityIndicator color="#FFF" /> : <AppText style={styles.btnText}>{tr.resetPassword}</AppText>}
             </TouchableOpacity>
             <TouchableOpacity onPress={requestCode}>
-              <Text style={styles.link}>Resend code</Text>
+              <AppText style={[styles.link, { color: t.secondary }]}>{tr.resendCode}</AppText>
             </TouchableOpacity>
           </>
         )}
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={[styles.link, { marginTop: 4 }]}>← Back to Login</Text>
+          <AppText style={[styles.link, { color: t.secondary, marginTop: 4 }]}>{tr.backToLogin}</AppText>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

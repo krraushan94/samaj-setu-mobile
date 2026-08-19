@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../../constants';
+import AppText from '../../components/AppText';
 import { useT } from '../../i18n';
 
 export default function WelcomeScreen({ navigation }) {
@@ -11,24 +12,25 @@ export default function WelcomeScreen({ navigation }) {
       <StatusBar barStyle="light-content" />
       <View style={styles.hero}>
         <Text style={styles.heroEmoji}>🏛️</Text>
-        <Text style={styles.appName}>{tr.appName}</Text>
-        <Text style={styles.tagline}>{tr.tagline}</Text>
-        <Text style={styles.tagline2}>{tr.tagline2}</Text>
+        <AppText style={styles.appName}>{tr.appName}</AppText>
+        <AppText style={styles.tagline}>{tr.tagline}</AppText>
+        <AppText style={styles.tagline2}>{tr.tagline2}</AppText>
       </View>
 
       <View style={styles.buttons}>
-        <TouchableOpacity style={styles.btnPrimary} onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.btnPrimaryText}>{tr.createAccount}</Text>
+        <TouchableOpacity style={styles.btnPrimary} onPress={() => navigation.navigate('Register')} accessibilityRole="button">
+          <AppText style={styles.btnPrimaryText}>{tr.createAccount}</AppText>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.btnSecondary} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.btnSecondaryText}>{tr.login}</Text>
+        <TouchableOpacity style={styles.btnSecondary} onPress={() => navigation.navigate('Login')} accessibilityRole="button">
+          <AppText style={styles.btnSecondaryText}>{tr.login}</AppText>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.guestBtn}
           onPress={() => navigation.replace('CitizenTabs')}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
         >
-          <Text style={styles.guestText}>{tr.browseAsGuest}</Text>
+          <AppText style={styles.guestText}>{tr.browseAsGuest}</AppText>
         </TouchableOpacity>
       </View>
     </LinearGradient>

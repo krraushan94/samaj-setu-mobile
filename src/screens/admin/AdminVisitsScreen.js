@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, Alert, Modal, RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { visitAPI } from '../../services/api';
 
 const STATUS_COLORS = { pending: '#F9A825', scheduled: '#2E7D32', completed: '#1565C0', cancelled: '#C62828' };
@@ -9,6 +11,7 @@ const TABS = ['pending', 'scheduled', 'completed', 'cancelled', 'all'];
 
 // Admin-only — review in-person office visit requests and assign a time.
 export default function AdminVisitsScreen() {
+  const t = useTheme();
   const [tab, setTab] = useState('pending');
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,11 +56,11 @@ export default function AdminVisitsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.tabRow}>
+    <View style={[styles.container, { backgroundColor: t.background }]}>
+      <View style={[styles.tabRow, { backgroundColor: t.card }]}>
         {TABS.map(tb => (
-          <TouchableOpacity key={tb} style={[styles.tab, tab === tb && styles.tabActive]} onPress={() => setTab(tb)}>
-            <Text style={[styles.tabText, tab === tb && styles.tabTextActive]}>{tb[0].toUpperCase() + tb.slice(1)}</Text>
+          <TouchableOpacity key={tb} style={[styles.tab, { borderColor: t.border }, tab === tb && { backgroundColor: t.primary, borderColor: t.primary }]} onPress={() => setTab(tb)}>
+            <AppText style={[styles.tabText, { color: t.text }, tab === tb && styles.tabTextActive]}>{tb[0].toUpperCase() + tb.slice(1)}</AppText>
           </TouchableOpacity>
         ))}
       </View>
@@ -67,39 +70,39 @@ export default function AdminVisitsScreen() {
         data={visits}
         keyExtractor={v => v.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={!loading && <Text style={styles.empty}>No {tab === 'all' ? '' : tab} visit requests</Text>}
+        ListEmptyComponent={!loading && <AppText style={[styles.empty, { color: t.textLight }]}>No {tab === 'all' ? '' : tab} visit requests</AppText>}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: t.card }]}>
             <View style={styles.cardTop}>
-              <Text style={styles.name}>{item.visitor_name}</Text>
+              <AppText style={[styles.name, { color: t.text }]}>{item.visitor_name}</AppText>
               <View style={[styles.badge, { backgroundColor: STATUS_COLORS[item.status] + '22' }]}>
-                <Text style={[styles.badgeText, { color: STATUS_COLORS[item.status] }]}>{item.status}</Text>
+                <AppText style={[styles.badgeText, { color: STATUS_COLORS[item.status] }]}>{item.status}</AppText>
               </View>
             </View>
-            <Text style={styles.reason}>{item.reason}</Text>
-            <Text style={styles.detail}>📞 {item.contact_mobile}  ·  👥 {item.number_of_persons}</Text>
-            <Text style={styles.detail}>📍 {item.address}</Text>
-            {item.aadhar_number && <Text style={styles.detail}>Aadhaar: {item.aadhar_number}</Text>}
-            {item.preferred_date && <Text style={styles.detail}>Preferred: {item.preferred_date}</Text>}
-            {item.scheduled_time && <Text style={[styles.detail, { color: STATUS_COLORS.scheduled, fontWeight: '600' }]}>🗓️ Scheduled: {item.scheduled_time}</Text>}
-            {item.admin_note && <Text style={styles.detail}>Note: {item.admin_note}</Text>}
-            <Text style={styles.date}>Requested: {new Date(item.created_at).toLocaleDateString('en-IN')}</Text>
+            <AppText style={[styles.reason, { color: t.text }]}>{item.reason}</AppText>
+            <AppText style={[styles.detail, { color: t.textLight }]}>📞 {item.contact_mobile}  ·  👥 {item.number_of_persons}</AppText>
+            <AppText style={[styles.detail, { color: t.textLight }]}>📍 {item.address}</AppText>
+            {item.aadhar_number && <AppText style={[styles.detail, { color: t.textLight }]}>Aadhaar: {item.aadhar_number}</AppText>}
+            {item.preferred_date && <AppText style={[styles.detail, { color: t.textLight }]}>Preferred: {item.preferred_date}</AppText>}
+            {item.scheduled_time && <AppText style={[styles.detail, { color: STATUS_COLORS.scheduled, fontWeight: '600' }]}>🗓️ Scheduled: {item.scheduled_time}</AppText>}
+            {item.admin_note && <AppText style={[styles.detail, { color: t.textLight }]}>Note: {item.admin_note}</AppText>}
+            <AppText style={[styles.date, { color: t.textLight }]}>Requested: {new Date(item.created_at).toLocaleDateString('en-IN')}</AppText>
 
             {(item.status === 'pending' || item.status === 'scheduled') && (
-              <View style={styles.actions}>
+              <View style={[styles.actions, { borderTopColor: t.border }]}>
                 <TouchableOpacity style={styles.actionBtn} onPress={() => openSchedule(item)}>
-                  <MaterialIcons name="event" size={16} color={COLORS.primary} />
-                  <Text style={styles.actionText}>{item.status === 'scheduled' ? 'Reschedule' : 'Schedule'}</Text>
+                  <MaterialIcons name="event" size={16} color={t.primary} />
+                  <AppText style={[styles.actionText, { color: t.primary }]}>{item.status === 'scheduled' ? 'Reschedule' : 'Schedule'}</AppText>
                 </TouchableOpacity>
                 {item.status === 'scheduled' && (
                   <TouchableOpacity style={styles.actionBtn} onPress={() => changeStatus(item, 'completed')}>
                     <MaterialIcons name="check-circle" size={16} color="#1565C0" />
-                    <Text style={styles.actionText}>Mark Completed</Text>
+                    <AppText style={[styles.actionText, { color: t.primary }]}>Mark Completed</AppText>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity style={styles.actionBtn} onPress={() => changeStatus(item, 'cancelled')}>
-                  <MaterialIcons name="cancel" size={16} color={COLORS.danger} />
-                  <Text style={[styles.actionText, { color: COLORS.danger }]}>Cancel</Text>
+                  <MaterialIcons name="cancel" size={16} color={t.danger} />
+                  <AppText style={[styles.actionText, { color: t.danger }]}>Cancel</AppText>
                 </TouchableOpacity>
               </View>
             )}
@@ -109,16 +112,16 @@ export default function AdminVisitsScreen() {
 
       <Modal visible={!!target} transparent animationType="fade" onRequestClose={() => setTarget(null)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Schedule Visit — {target?.visitor_name}</Text>
-            <TextInput style={styles.input} placeholder="Date/time (e.g. Mon 12 Aug, 11:00 AM)" value={scheduledTime} onChangeText={setScheduledTime} />
-            <TextInput style={[styles.input, styles.textarea]} placeholder="Note to citizen (optional)" value={adminNote} onChangeText={setAdminNote} multiline numberOfLines={2} />
+          <View style={[styles.modalCard, { backgroundColor: t.card }]}>
+            <AppText style={[styles.modalTitle, { color: t.text }]}>Schedule Visit — {target?.visitor_name}</AppText>
+            <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholderTextColor={t.textLight} placeholder="Date/time (e.g. Mon 12 Aug, 11:00 AM)" value={scheduledTime} onChangeText={setScheduledTime} />
+            <TextInput style={[styles.input, styles.textarea, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholderTextColor={t.textLight} placeholder="Note to citizen (optional)" value={adminNote} onChangeText={setAdminNote} multiline numberOfLines={2} />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setTarget(null)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+              <TouchableOpacity style={[styles.cancelBtn, { borderColor: t.border }]} onPress={() => setTarget(null)}>
+                <AppText style={[styles.cancelBtnText, { color: t.text }]}>Cancel</AppText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmBtn} onPress={submitSchedule}>
-                <Text style={styles.confirmBtnText}>Confirm</Text>
+              <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: t.primary }]} onPress={submitSchedule}>
+                <AppText style={styles.confirmBtnText}>Confirm</AppText>
               </TouchableOpacity>
             </View>
           </View>

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { departmentAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { TaskBoard, ChatPanel } from '../../components/TeamworkViews';
@@ -8,6 +10,7 @@ import { TaskBoard, ChatPanel } from '../../components/TeamworkViews';
 // Team leader/member workspace — Tasks + Chat, always scoped to their own
 // department (never sent by the client — the backend infers it from the token).
 export default function TeamWorkspaceScreen() {
+  const t = useTheme();
   const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
   const [tab, setTab] = useState('tasks');
@@ -21,13 +24,13 @@ export default function TeamWorkspaceScreen() {
   }, [user?.department_id]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.tabRow}>
-        <TouchableOpacity style={[styles.tab, tab === 'tasks' && styles.tabActive]} onPress={() => setTab('tasks')}>
-          <Text style={[styles.tabText, tab === 'tasks' && styles.tabTextActive]}>Tasks</Text>
+    <View style={[styles.container, { backgroundColor: t.background }]}>
+      <View style={[styles.tabRow, { backgroundColor: t.card }]}>
+        <TouchableOpacity style={[styles.tab, tab === 'tasks' && { borderBottomColor: t.primary }]} onPress={() => setTab('tasks')}>
+          <AppText style={[styles.tabText, { color: t.textLight }, tab === 'tasks' && { color: t.primary }]}>Tasks</AppText>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, tab === 'chat' && styles.tabActive]} onPress={() => setTab('chat')}>
-          <Text style={[styles.tabText, tab === 'chat' && styles.tabTextActive]}>Team Chat</Text>
+        <TouchableOpacity style={[styles.tab, tab === 'chat' && { borderBottomColor: t.primary }]} onPress={() => setTab('chat')}>
+          <AppText style={[styles.tabText, { color: t.textLight }, tab === 'chat' && { color: t.primary }]}>Team Chat</AppText>
         </TouchableOpacity>
       </View>
 

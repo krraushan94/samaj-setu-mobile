@@ -5,12 +5,14 @@ import * as Location from 'expo-location';
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
 import { MaterialIcons } from '@expo/vector-icons';
 import AppText from '../../components/AppText';
+import { useTheme } from '../../store/themeStore';
 import { COLORS, ISSUE_CATEGORIES, SUB_CATEGORIES, PRIORITY_COLORS, PAYMENT_EXEMPT_GROUPS, PAYMENT_EXEMPT_SUBCATEGORY_LABELS, MENTAL_HEALTH_SUBCATEGORY, OFFICE_ADDRESS, OFFICE_EMAIL, MAX_MEDIA_ATTACHMENTS } from '../../constants';
 import { ticketAPI, paymentAPI, mediaAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useT } from '../../i18n';
 
 export default function IssueCategoryScreen({ navigation, route }) {
+  const th = useTheme();
   const tr = useT().issueForm;
   const user = useAuthStore((s) => s.user);
   const trCat = useT().categories;
@@ -174,13 +176,13 @@ export default function IssueCategoryScreen({ navigation, route }) {
     const canContinue = bmsDetails.fullName.trim() && bmsDetails.organisationName.trim()
       && (hasIdOnFile || bmsDetails.aadharNumber.trim() || bmsDetails.voterIdNumber.trim());
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: th.background }]}>
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-          <Text style={styles.sectionTitle}>{tr.bmsTitle}</Text>
-          <Text style={styles.bmsIntro}>{tr.bmsIntro}</Text>
+          <AppText style={[styles.sectionTitle, { color: th.text }]}>{tr.bmsTitle}</AppText>
+          <AppText style={[styles.bmsIntro, { color: th.textLight }]}>{tr.bmsIntro}</AppText>
 
-          <Text style={styles.label}>{tr.bmsFullName}</Text>
-          <TextInput style={styles.input} value={bmsDetails.fullName} onChangeText={(v) => setBms('fullName', v)} placeholder={tr.bmsFullNamePlaceholder} />
+          <AppText style={[styles.label, { color: th.text }]}>{tr.bmsFullName}</AppText>
+          <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.fullName} onChangeText={(v) => setBms('fullName', v)} placeholder={tr.bmsFullNamePlaceholder} />
 
           {hasIdOnFile ? (
             <View style={styles.bmsIdOnFileRow}>
@@ -189,60 +191,60 @@ export default function IssueCategoryScreen({ navigation, route }) {
             </View>
           ) : (
             <>
-              <Text style={styles.label}>{tr.bmsIdProofNote}</Text>
-              <TextInput style={styles.input} value={bmsDetails.aadharNumber} onChangeText={(v) => setBms('aadharNumber', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsAadhar} keyboardType="number-pad" maxLength={12} />
-              <TextInput style={styles.input} value={bmsDetails.voterIdNumber} onChangeText={(v) => setBms('voterIdNumber', v.toUpperCase())} placeholder={tr.bmsVoterId} autoCapitalize="characters" maxLength={10} />
+              <AppText style={[styles.label, { color: th.text }]}>{tr.bmsIdProofNote}</AppText>
+              <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.aadharNumber} onChangeText={(v) => setBms('aadharNumber', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsAadhar} keyboardType="number-pad" maxLength={12} />
+              <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.voterIdNumber} onChangeText={(v) => setBms('voterIdNumber', v.toUpperCase())} placeholder={tr.bmsVoterId} autoCapitalize="characters" maxLength={10} />
             </>
           )}
 
-          <Text style={styles.label}>{tr.bmsOrgName}</Text>
-          <TextInput style={styles.input} value={bmsDetails.organisationName} onChangeText={(v) => setBms('organisationName', v)} placeholder={tr.bmsOrgNamePlaceholder} />
+          <AppText style={[styles.label, { color: th.text }]}>{tr.bmsOrgName}</AppText>
+          <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.organisationName} onChangeText={(v) => setBms('organisationName', v)} placeholder={tr.bmsOrgNamePlaceholder} />
 
-          <Text style={styles.label}>{tr.bmsIdCard}</Text>
-          <TextInput style={styles.input} value={bmsDetails.idCardNumber} onChangeText={(v) => setBms('idCardNumber', v)} placeholder={tr.bmsIdCardPlaceholder} />
+          <AppText style={[styles.label, { color: th.text }]}>{tr.bmsIdCard}</AppText>
+          <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.idCardNumber} onChangeText={(v) => setBms('idCardNumber', v)} placeholder={tr.bmsIdCardPlaceholder} />
 
-          <Text style={styles.label}>{tr.bmsSector}</Text>
+          <AppText style={[styles.label, { color: th.text }]}>{tr.bmsSector}</AppText>
           <View style={styles.priorityRow}>
             {['private', 'government_psu', 'unorganized', 'self_employed'].map((s) => (
-              <TouchableOpacity key={s} style={[styles.priorityChip, bmsDetails.sector === s && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }]}
+              <TouchableOpacity key={s} style={[styles.priorityChip, { borderColor: th.border }, bmsDetails.sector === s && { backgroundColor: th.primary, borderColor: th.primary }]}
                 onPress={() => setBms('sector', bmsDetails.sector === s ? '' : s)}>
-                <AppText style={[styles.priorityText, bmsDetails.sector === s && { color: '#FFF' }]}>{tr.bmsSectorOptions?.[s]}</AppText>
+                <AppText style={[styles.priorityText, { color: th.text }, bmsDetails.sector === s && { color: '#FFF' }]}>{tr.bmsSectorOptions?.[s]}</AppText>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={styles.label}>{tr.bmsDuration}</Text>
+          <AppText style={[styles.label, { color: th.text }]}>{tr.bmsDuration}</AppText>
           <View style={styles.priorityRow}>
             {['lt_6m', '6m_2y', '2y_5y', 'gt_5y'].map((d) => (
-              <TouchableOpacity key={d} style={[styles.priorityChip, bmsDetails.employmentDuration === d && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }]}
+              <TouchableOpacity key={d} style={[styles.priorityChip, { borderColor: th.border }, bmsDetails.employmentDuration === d && { backgroundColor: th.primary, borderColor: th.primary }]}
                 onPress={() => setBms('employmentDuration', bmsDetails.employmentDuration === d ? '' : d)}>
-                <AppText style={[styles.priorityText, bmsDetails.employmentDuration === d && { color: '#FFF' }]}>{tr.bmsDurationOptions?.[d]}</AppText>
+                <AppText style={[styles.priorityText, { color: th.text }, bmsDetails.employmentDuration === d && { color: '#FFF' }]}>{tr.bmsDurationOptions?.[d]}</AppText>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={styles.label}>{tr.bmsWage}</Text>
-          <TextInput style={styles.input} value={bmsDetails.monthlyWage} onChangeText={(v) => setBms('monthlyWage', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsWagePlaceholder} keyboardType="number-pad" />
+          <AppText style={[styles.label, { color: th.text }]}>{tr.bmsWage}</AppText>
+          <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.monthlyWage} onChangeText={(v) => setBms('monthlyWage', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsWagePlaceholder} keyboardType="number-pad" />
 
-          <Text style={styles.label}>{tr.bmsEmployerContact}</Text>
-          <TextInput style={styles.input} value={bmsDetails.employerContact} onChangeText={(v) => setBms('employerContact', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsEmployerContactPlaceholder} keyboardType="number-pad" maxLength={10} />
+          <AppText style={[styles.label, { color: th.text }]}>{tr.bmsEmployerContact}</AppText>
+          <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.employerContact} onChangeText={(v) => setBms('employerContact', v.replace(/[^0-9]/g, ''))} placeholder={tr.bmsEmployerContactPlaceholder} keyboardType="number-pad" maxLength={10} />
 
           <TouchableOpacity style={styles.anonRow} onPress={() => setBms('isBmsMember', !bmsDetails.isBmsMember)}>
-            <MaterialIcons name={bmsDetails.isBmsMember ? 'check-box' : 'check-box-outline-blank'} size={22} color={COLORS.primary} />
-            <Text style={styles.anonText}>{tr.bmsIsMember}</Text>
+            <MaterialIcons name={bmsDetails.isBmsMember ? 'check-box' : 'check-box-outline-blank'} size={22} color={th.primary} />
+            <AppText style={[styles.anonText, { color: th.textLight }]}>{tr.bmsIsMember}</AppText>
           </TouchableOpacity>
           {bmsDetails.isBmsMember && (
-            <TextInput style={styles.input} value={bmsDetails.bmsMembershipNumber} onChangeText={(v) => setBms('bmsMembershipNumber', v)} placeholder={tr.bmsMembershipNumberPlaceholder} />
+            <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.bmsMembershipNumber} onChangeText={(v) => setBms('bmsMembershipNumber', v)} placeholder={tr.bmsMembershipNumberPlaceholder} />
           )}
 
-          {!canContinue && <Text style={styles.bmsRequiredNote}>{tr.bmsRequiredNote}</Text>}
+          {!canContinue && <AppText style={styles.bmsRequiredNote}>{tr.bmsRequiredNote}</AppText>}
 
-          <TouchableOpacity style={[styles.nextBtn, !canContinue && { opacity: 0.5 }]} disabled={!canContinue}
+          <TouchableOpacity style={[styles.nextBtn, { backgroundColor: th.primary }, !canContinue && { opacity: 0.5 }]} disabled={!canContinue}
             onPress={() => { setShowBmsIntake(false); setStep(1); }}>
-            <Text style={styles.nextBtnText}>{tr.bmsContinue}</Text>
+            <AppText style={styles.nextBtnText}>{tr.bmsContinue}</AppText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.backBtn} onPress={() => { setShowBmsIntake(false); setCategory(''); }}>
-            <Text style={styles.backText}>{tr.changeCategory}</Text>
+            <AppText style={[styles.backText, { color: th.secondary }]}>{tr.changeCategory}</AppText>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -251,23 +253,23 @@ export default function IssueCategoryScreen({ navigation, route }) {
 
   if (showMentalHealthHelp) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: th.background }]}>
         <View style={styles.mhCard}>
           <Text style={styles.mhEmoji}>💚</Text>
-          <Text style={styles.mhTitle}>You're not alone</Text>
-          <Text style={styles.mhBody}>
+          <AppText style={[styles.mhTitle, { color: th.text }]}>You're not alone</AppText>
+          <AppText style={[styles.mhBody, { color: th.textLight }]}>
             If you or someone you know is going through a mental health crisis, free and confidential
             support is available right now — please reach out.
-          </Text>
+          </AppText>
           <TouchableOpacity style={styles.mhCallBtn} onPress={() => Linking.openURL('tel:14416')}>
             <MaterialIcons name="call" size={20} color="#FFF" />
-            <Text style={styles.mhCallBtnText}>Call Tele-MANAS Helpline (14416)</Text>
+            <AppText style={styles.mhCallBtnText}>Call Tele-MANAS Helpline (14416)</AppText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.mhContinueBtn} onPress={() => { setShowMentalHealthHelp(false); setStep(2); }}>
-            <Text style={styles.mhContinueBtnText}>Also report this privately to Social Welfare →</Text>
+            <AppText style={[styles.mhContinueBtnText, { color: th.secondary }]}>Also report this privately to Social Welfare →</AppText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.backBtn} onPress={() => setShowMentalHealthHelp(false)}>
-            <Text style={styles.backText}>{tr.back}</Text>
+            <AppText style={[styles.backText, { color: th.secondary }]}>{tr.back}</AppText>
           </TouchableOpacity>
         </View>
       </View>
@@ -275,15 +277,15 @@ export default function IssueCategoryScreen({ navigation, route }) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: th.background }]}>
       {/* Step indicator */}
-      <View style={styles.steps}>
+      <View style={[styles.steps, { backgroundColor: th.card }]}>
         {STEPS.map((s, i) => (
           <View key={s} style={styles.stepItem}>
-            <View style={[styles.stepCircle, i <= step && styles.stepCircleActive]}>
-              <Text style={[styles.stepNum, i <= step && styles.stepNumActive]}>{i + 1}</Text>
+            <View style={[styles.stepCircle, { backgroundColor: th.border }, i <= step && { backgroundColor: th.primary }]}>
+              <AppText style={[styles.stepNum, { color: th.textLight }, i <= step && styles.stepNumActive]}>{i + 1}</AppText>
             </View>
-            <Text style={[styles.stepLabel, i === step && styles.stepLabelActive]}>{s}</Text>
+            <AppText style={[styles.stepLabel, { color: th.textLight }, i === step && { color: th.primary, fontWeight: '600' }]}>{s}</AppText>
           </View>
         ))}
       </View>
@@ -293,7 +295,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
         {/* STEP 0: Category */}
         {step === 0 && (
           <>
-            <Text style={styles.sectionTitle}>{tr.selectCategory}</Text>
+            <AppText style={[styles.sectionTitle, { color: th.text }]}>{tr.selectCategory}</AppText>
             <View style={styles.grid}>
               {ISSUE_CATEGORIES.map(cat => (
                 <TouchableOpacity key={cat.key} style={[styles.catCard, { borderColor: cat.color, backgroundColor: cat.color + '15' }]}
@@ -307,7 +309,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
                     }
                   }}>
                   <MaterialIcons name={cat.icon} size={28} color={cat.color} />
-                  <Text style={[styles.catLabel, { color: cat.color }]}>{trCat.groups?.[cat.key] || cat.label}</Text>
+                  <AppText style={[styles.catLabel, { color: cat.color }]}>{trCat.groups?.[cat.key] || cat.label}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -317,17 +319,17 @@ export default function IssueCategoryScreen({ navigation, route }) {
         {/* STEP 1: Sub-category */}
         {step === 1 && (
           <>
-            <Text style={styles.sectionTitle}>{tr.selectIssueType}</Text>
+            <AppText style={[styles.sectionTitle, { color: th.text }]}>{tr.selectIssueType}</AppText>
             {Array.isArray(SUB_CATEGORIES[category]) ? (
               (SUB_CATEGORIES[category] || []).map((sub, i) => (
-                <TouchableOpacity key={sub} style={[styles.subCard, subCategory === sub && styles.subCardActive]}
+                <TouchableOpacity key={sub} style={[styles.subCard, { backgroundColor: th.card }, subCategory === sub && { backgroundColor: th.primary }]}
                   onPress={() => {
                     setSubCategory(sub); set('title', sub);
                     if (sub === MENTAL_HEALTH_SUBCATEGORY) setShowMentalHealthHelp(true);
                     else setStep(2);
                   }}>
-                  <AppText style={[styles.subText, subCategory === sub && styles.subTextActive]}>{trCat.subs?.[category]?.[i] || sub}</AppText>
-                  <MaterialIcons name="chevron-right" size={20} color={subCategory === sub ? '#FFF' : COLORS.textLight} />
+                  <AppText style={[styles.subText, { color: th.text }, subCategory === sub && styles.subTextActive]}>{trCat.subs?.[category]?.[i] || sub}</AppText>
+                  <MaterialIcons name="chevron-right" size={20} color={subCategory === sub ? '#FFF' : th.textLight} />
                 </TouchableOpacity>
               ))
             ) : (
@@ -336,14 +338,14 @@ export default function IssueCategoryScreen({ navigation, route }) {
               // since the ticket has no separate worker-type column.
               Object.entries(SUB_CATEGORIES[category] || {}).map(([group, issues]) => (
                 <View key={group} style={styles.subGroup}>
-                  <Text style={styles.subGroupTitle}>{trCat.labourGroups?.[group] || group}</Text>
+                  <AppText style={[styles.subGroupTitle, { color: th.textLight }]}>{trCat.labourGroups?.[group] || group}</AppText>
                   {issues.map((issue, j) => {
                     const combined = `${group} – ${issue}`;
                     return (
-                      <TouchableOpacity key={issue} style={[styles.subCard, subCategory === combined && styles.subCardActive]}
+                      <TouchableOpacity key={issue} style={[styles.subCard, { backgroundColor: th.card }, subCategory === combined && { backgroundColor: th.primary }]}
                         onPress={() => { setSubCategory(combined); set('title', combined); setStep(2); }}>
-                        <AppText style={[styles.subText, subCategory === combined && styles.subTextActive]}>{trCat.subs?.[category]?.[group]?.[j] || issue}</AppText>
-                        <MaterialIcons name="chevron-right" size={20} color={subCategory === combined ? '#FFF' : COLORS.textLight} />
+                        <AppText style={[styles.subText, { color: th.text }, subCategory === combined && styles.subTextActive]}>{trCat.subs?.[category]?.[group]?.[j] || issue}</AppText>
+                        <MaterialIcons name="chevron-right" size={20} color={subCategory === combined ? '#FFF' : th.textLight} />
                       </TouchableOpacity>
                     );
                   })}
@@ -351,7 +353,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
               ))
             )}
             <TouchableOpacity style={styles.backBtn} onPress={() => setStep(0)}>
-              <Text style={styles.backText}>{tr.changeCategory}</Text>
+              <AppText style={[styles.backText, { color: th.secondary }]}>{tr.changeCategory}</AppText>
             </TouchableOpacity>
           </>
         )}
@@ -359,98 +361,98 @@ export default function IssueCategoryScreen({ navigation, route }) {
         {/* STEP 2: Details */}
         {step === 2 && (
           <>
-            <Text style={styles.sectionTitle}>{tr.issueDetails}</Text>
-            <Text style={styles.label}>{tr.titleLabel}</Text>
-            <TextInput style={styles.input} value={form.title} onChangeText={v => set('title', v)} placeholder={tr.titlePlaceholder} />
+            <AppText style={[styles.sectionTitle, { color: th.text }]}>{tr.issueDetails}</AppText>
+            <AppText style={[styles.label, { color: th.text }]}>{tr.titleLabel}</AppText>
+            <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={form.title} onChangeText={v => set('title', v)} placeholder={tr.titlePlaceholder} />
 
-            <Text style={styles.label}>{tr.descriptionLabel}</Text>
-            <TextInput style={[styles.input, styles.textarea]} value={form.description} onChangeText={v => set('description', v)}
+            <AppText style={[styles.label, { color: th.text }]}>{tr.descriptionLabel}</AppText>
+            <TextInput style={[styles.input, styles.textarea, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={form.description} onChangeText={v => set('description', v)}
               placeholder={tr.descriptionPlaceholder} multiline numberOfLines={4} />
 
-            <Text style={styles.label}>{tr.locationLabel}</Text>
+            <AppText style={[styles.label, { color: th.text }]}>{tr.locationLabel}</AppText>
             <View style={styles.row}>
-              <TextInput style={[styles.input, { flex: 1 }]} value={form.locationText} onChangeText={v => set('locationText', v)} placeholder={tr.locationPlaceholder} />
-              <TouchableOpacity style={styles.gpsBtn} onPress={autoLocation} accessibilityLabel="Use current GPS location">
-                <MaterialIcons name="gps-fixed" size={22} color={COLORS.primary} />
+              <TextInput style={[styles.input, { flex: 1, borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={form.locationText} onChangeText={v => set('locationText', v)} placeholder={tr.locationPlaceholder} />
+              <TouchableOpacity style={[styles.gpsBtn, { backgroundColor: th.card, borderColor: th.border }]} onPress={autoLocation} accessibilityLabel="Use current GPS location">
+                <MaterialIcons name="gps-fixed" size={22} color={th.primary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.label}>{tr.priorityLabel}</Text>
+            <AppText style={[styles.label, { color: th.text }]}>{tr.priorityLabel}</AppText>
             <View style={styles.priorityRow}>
               {['low','medium','high','critical'].map(p => (
                 <TouchableOpacity key={p} style={[styles.priorityChip, { borderColor: PRIORITY_COLORS[p] }, form.priority === p && { backgroundColor: PRIORITY_COLORS[p] }]}
                   onPress={() => set('priority', p)}>
-                  <AppText style={[styles.priorityText, form.priority === p && { color: '#FFF' }]}>{tr[`priority${p.charAt(0).toUpperCase()+p.slice(1)}`]}</AppText>
+                  <AppText style={[styles.priorityText, { color: th.text }, form.priority === p && { color: '#FFF' }]}>{tr[`priority${p.charAt(0).toUpperCase()+p.slice(1)}`]}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
-            {category === 'women_safety' && <Text style={styles.autoAlert}>{tr.autoEscalate}</Text>}
-            {isFeeExempt && <Text style={styles.noFeeAlert}>{tr.noFeeNote}</Text>}
+            {category === 'women_safety' && <AppText style={styles.autoAlert}>{tr.autoEscalate}</AppText>}
+            {isFeeExempt && <AppText style={styles.noFeeAlert}>{tr.noFeeNote}</AppText>}
 
-            <Text style={styles.label}>{tr.attachments}</Text>
+            <AppText style={[styles.label, { color: th.text }]}>{tr.attachments}</AppText>
             <View style={styles.mediaRow}>
-              <MediaBtn icon="photo-camera" label={tr.photo} onPress={() => pickMedia('photo')} />
-              <MediaBtn icon="videocam"    label={tr.video} onPress={() => pickMedia('video')} />
+              <MediaBtn icon="photo-camera" label={tr.photo} onPress={() => pickMedia('photo')} theme={th} />
+              <MediaBtn icon="videocam"    label={tr.video} onPress={() => pickMedia('video')} theme={th} />
               <MediaBtn icon={recorderState.isRecording ? 'stop' : 'mic'} label={recorderState.isRecording ? (tr.stopRecording || 'Stop') : tr.audio}
-                onPress={recorderState.isRecording ? stopRecording : startRecording} active={recorderState.isRecording} />
+                onPress={recorderState.isRecording ? stopRecording : startRecording} active={recorderState.isRecording} theme={th} />
             </View>
             {recorderState.isRecording && (
-              <Text style={styles.recordingIndicator}>🔴 {tr.recording || 'Recording'}… {Math.round((recorderState.durationMillis || 0) / 1000)}s</Text>
+              <AppText style={styles.recordingIndicator}>🔴 {tr.recording || 'Recording'}… {Math.round((recorderState.durationMillis || 0) / 1000)}s</AppText>
             )}
-            {media.length > 0 && <Text style={styles.mediaCount}>✅ {media.length}/{MAX_MEDIA_ATTACHMENTS} {tr.filesAttached}</Text>}
+            {media.length > 0 && <AppText style={styles.mediaCount}>✅ {media.length}/{MAX_MEDIA_ATTACHMENTS} {tr.filesAttached}</AppText>}
 
             <TouchableOpacity style={styles.anonRow} onPress={() => set('isAnonymous', !form.isAnonymous)}>
-              <MaterialIcons name={form.isAnonymous ? 'check-box' : 'check-box-outline-blank'} size={22} color={COLORS.primary} />
-              <Text style={styles.anonText}>{tr.anonymousLabel}</Text>
+              <MaterialIcons name={form.isAnonymous ? 'check-box' : 'check-box-outline-blank'} size={22} color={th.primary} />
+              <AppText style={[styles.anonText, { color: th.textLight }]}>{tr.anonymousLabel}</AppText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.nextBtn} onPress={submitTicket} disabled={loading}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.nextBtnText}>{isFeeExempt ? tr.submitIssue : tr.proceedToPayment}</Text>}
+            <TouchableOpacity style={[styles.nextBtn, { backgroundColor: th.primary }]} onPress={submitTicket} disabled={loading}>
+              {loading ? <ActivityIndicator color="#FFF" /> : <AppText style={styles.nextBtnText}>{isFeeExempt ? tr.submitIssue : tr.proceedToPayment}</AppText>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.backBtn} onPress={() => setStep(1)}>
-              <Text style={styles.backText}>{tr.back}</Text>
+              <AppText style={[styles.backText, { color: th.secondary }]}>{tr.back}</AppText>
             </TouchableOpacity>
           </>
         )}
 
         {/* STEP 3: Confirmation */}
         {step === 3 && (
-          <View style={styles.confirmCard}>
+          <View style={[styles.confirmCard, { backgroundColor: th.card }]}>
             <Text style={styles.confirmEmoji}>✅</Text>
-            <Text style={styles.confirmTitle}>{tr.issueSubmitted}</Text>
-            <Text style={styles.confirmSub}>
+            <AppText style={[styles.confirmTitle, { color: th.success }]}>{tr.issueSubmitted}</AppText>
+            <AppText style={[styles.confirmSub, { color: th.textLight }]}>
               {paymentRequired ? tr.submittedSuccess : tr.submittedNoFee}
-            </Text>
+            </AppText>
 
             {paymentRequired ? (
               <>
                 <View style={styles.refBox}>
-                  <Text style={styles.refLabel}>{tr.paymentReference}</Text>
-                  <Text style={styles.refNum}>{paymentRef}</Text>
-                  <Text style={styles.refInstr}>{tr.visitOffice}</Text>
-                  <Text style={styles.refAddr}>📍 {OFFICE_ADDRESS}</Text>
-                  <Text style={styles.refAddr}>✉️ {OFFICE_EMAIL}</Text>
+                  <AppText style={[styles.refLabel, { color: th.textLight }]}>{tr.paymentReference}</AppText>
+                  <AppText style={[styles.refNum, { color: th.secondary }]}>{paymentRef}</AppText>
+                  <AppText style={[styles.refInstr, { color: th.text }]}>{tr.visitOffice}</AppText>
+                  <AppText style={[styles.refAddr, { color: th.textLight }]}>📍 {OFFICE_ADDRESS}</AppText>
+                  <AppText style={[styles.refAddr, { color: th.textLight }]}>✉️ {OFFICE_EMAIL}</AppText>
                 </View>
 
                 <View style={styles.feeInfo}>
-                  <MaterialIcons name="info" size={18} color={COLORS.secondary} />
-                  <Text style={styles.feeText}> {tr.feeNote}</Text>
+                  <MaterialIcons name="info" size={18} color={th.secondary} />
+                  <AppText style={[styles.feeText, { color: th.secondary }]}> {tr.feeNote}</AppText>
                 </View>
 
                 <View style={styles.onlineNote}>
-                  <Text style={styles.onlineNoteText}>{tr.onlineComingSoon}</Text>
+                  <AppText style={[styles.onlineNoteText, { color: th.textLight }]}>{tr.onlineComingSoon}</AppText>
                 </View>
               </>
             ) : (
               <View style={[styles.refBox, { backgroundColor: '#E8F5E9' }]}>
-                <Text style={[styles.refLabel, { color: COLORS.success }]}>{tr.statusLabel}</Text>
-                <Text style={[styles.refNum, { color: COLORS.success }]}>{tr.statusOpenValue}</Text>
-                <Text style={styles.refInstr}>{tr.freeCategoryNote}</Text>
+                <AppText style={[styles.refLabel, { color: COLORS.success }]}>{tr.statusLabel}</AppText>
+                <AppText style={[styles.refNum, { color: COLORS.success }]}>{tr.statusOpenValue}</AppText>
+                <AppText style={[styles.refInstr, { color: th.text }]}>{tr.freeCategoryNote}</AppText>
               </View>
             )}
 
-            <TouchableOpacity style={styles.nextBtn} onPress={() => navigation.replace('CitizenTabs')}>
-              <Text style={styles.nextBtnText}>{tr.goToMyTickets}</Text>
+            <TouchableOpacity style={[styles.nextBtn, { backgroundColor: th.primary }]} onPress={() => navigation.replace('CitizenTabs')}>
+              <AppText style={styles.nextBtnText}>{tr.goToMyTickets}</AppText>
             </TouchableOpacity>
           </View>
         )}
@@ -459,10 +461,10 @@ export default function IssueCategoryScreen({ navigation, route }) {
   );
 }
 
-const MediaBtn = ({ icon, label, onPress, active }) => (
-  <TouchableOpacity style={[styles.mediaBtn, active && styles.mediaBtnActive]} onPress={onPress}>
-    <MaterialIcons name={icon} size={22} color={active ? COLORS.danger : COLORS.primary} />
-    <AppText style={[styles.mediaBtnText, active && { color: COLORS.danger }]}>{label}</AppText>
+const MediaBtn = ({ icon, label, onPress, active, theme }) => (
+  <TouchableOpacity style={[styles.mediaBtn, { backgroundColor: theme.card, borderColor: theme.border }, active && { backgroundColor: '#FFF3F3', borderColor: theme.danger }]} onPress={onPress}>
+    <MaterialIcons name={icon} size={22} color={active ? theme.danger : theme.primary} />
+    <AppText style={[styles.mediaBtnText, { color: theme.text }, active && { color: theme.danger }]}>{label}</AppText>
   </TouchableOpacity>
 );
 

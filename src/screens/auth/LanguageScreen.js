@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
 import { COLORS, LANGUAGES } from '../../constants';
+import AppText from '../../components/AppText';
 import { useAuthStore } from '../../store/authStore';
 
 export default function LanguageScreen({ navigation }) {
@@ -16,14 +17,14 @@ export default function LanguageScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.header}>
         <Text style={styles.headerEmoji}>🌐</Text>
-        <Text style={styles.title}>Choose Language</Text>
-        <Text style={styles.subtitle}>भाषा चुनें • ভাষা বেছে নিন</Text>
+        <AppText style={styles.title}>Choose Language</AppText>
+        <AppText style={styles.subtitle}>भाषा चुनें • ভাষা বেছে নিন</AppText>
       </View>
       <View style={styles.cards}>
         {LANGUAGES.map((lang) => (
-          <TouchableOpacity key={lang.code} style={styles.card} onPress={() => select(lang.code)} activeOpacity={0.8}>
-            <Text style={styles.cardLabel}>{lang.label}</Text>
-            <Text style={styles.cardName}>{lang.name}</Text>
+          <TouchableOpacity key={lang.code} style={styles.card} onPress={() => select(lang.code)} activeOpacity={0.8} accessibilityLabel={lang.name} accessibilityRole="button">
+            <AppText style={styles.cardLabel}>{lang.label}</AppText>
+            <AppText style={styles.cardName}>{lang.name}</AppText>
           </TouchableOpacity>
         ))}
       </View>

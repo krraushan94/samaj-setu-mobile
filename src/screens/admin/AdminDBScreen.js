@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
 import { adminAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import AppText from '../../components/AppText';
@@ -22,6 +23,7 @@ const TABLES = [
 ];
 
 export default function AdminDBScreen({ navigation }) {
+  const th = useTheme();
   const user = useAuthStore((s) => s.user);
   const isPrimaryAdmin = user?.username === 'Admin_Raushan';
   const [selected, setSelected] = useState(null);
@@ -51,14 +53,14 @@ export default function AdminDBScreen({ navigation }) {
 
   if (!isPrimaryAdmin) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: th.background }]}>
         <View style={styles.headerBar}>
-          <Text style={styles.pageTitle}>🗄️ Database Explorer</Text>
-          <Text style={styles.pageSub}>Admin_Raushan — Read-only access</Text>
+          <AppText style={styles.pageTitle}>🗄️ Database Explorer</AppText>
+          <AppText style={styles.pageSub}>Admin_Raushan — Read-only access</AppText>
         </View>
         <View style={styles.restricted}>
-          <MaterialIcons name="lock" size={40} color={COLORS.textLight} />
-          <Text style={styles.restrictedText}>Restricted to Admin_Raushan — raw data access, including payments, isn't delegated to sub-admins.</Text>
+          <MaterialIcons name="lock" size={40} color={th.textLight} />
+          <AppText style={[styles.restrictedText, { color: th.textLight }]}>Restricted to Admin_Raushan — raw data access, including payments, isn't delegated to sub-admins.</AppText>
         </View>
       </View>
     );
@@ -66,10 +68,10 @@ export default function AdminDBScreen({ navigation }) {
 
   if (!selected) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: th.background }]}>
         <View style={styles.headerBar}>
-          <Text style={styles.pageTitle}>🗄️ Database Explorer</Text>
-          <Text style={styles.pageSub}>Admin_Raushan — Read-only access</Text>
+          <AppText style={styles.pageTitle}>🗄️ Database Explorer</AppText>
+          <AppText style={styles.pageSub}>Admin_Raushan — Read-only access</AppText>
         </View>
         <FlatList
           data={TABLES}
@@ -77,9 +79,9 @@ export default function AdminDBScreen({ navigation }) {
           contentContainerStyle={styles.grid}
           keyExtractor={t => t.key}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.tableCard, { borderLeftColor: item.color }]} onPress={() => { setSelected(item); loadTable(item.key); }}>
+            <TouchableOpacity style={[styles.tableCard, { backgroundColor: th.card, borderLeftColor: item.color }]} onPress={() => { setSelected(item); loadTable(item.key); }}>
               <MaterialIcons name={item.icon} size={28} color={item.color} />
-              <AppText style={styles.tableLabel}>{item.label}</AppText>
+              <AppText style={[styles.tableLabel, { color: th.text }]}>{item.label}</AppText>
             </TouchableOpacity>
           )}
         />
@@ -90,30 +92,30 @@ export default function AdminDBScreen({ navigation }) {
   const cols = rows.length > 0 ? Object.keys(rows[0]).slice(0, 4) : [];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: th.background }]}>
       <View style={styles.headerBar}>
         <TouchableOpacity onPress={() => { setSelected(null); setRows([]); }} style={styles.backRow}>
-          <MaterialIcons name="arrow-back" size={20} color={COLORS.primary} />
-          <Text style={styles.backText}>Tables</Text>
+          <MaterialIcons name="arrow-back" size={20} color="#FFF" />
+          <AppText style={styles.backText}>Tables</AppText>
         </TouchableOpacity>
         <View style={styles.tableHeaderRow}>
-          <Text style={styles.pageTitle}>{selected.label}</Text>
-          <Text style={styles.pageSub}>{total} records</Text>
+          <AppText style={styles.pageTitle}>{selected.label}</AppText>
+          <AppText style={styles.pageSub}>{total} records</AppText>
         </View>
         <TouchableOpacity style={styles.exportBtn} onPress={() => exportCSV(selected.key)}>
           <MaterialIcons name="download" size={18} color="#FFF" />
-          <Text style={styles.exportText}>Export CSV</Text>
+          <AppText style={styles.exportText}>Export CSV</AppText>
         </TouchableOpacity>
       </View>
 
       {loading && rows.length === 0
-        ? <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+        ? <ActivityIndicator size="large" color={th.primary} style={{ marginTop: 40 }} />
         : (
           <ScrollView horizontal>
             <View>
               {/* Column headers */}
-              <View style={styles.tableRow}>
-                {cols.map(c => <Text key={c} style={styles.colHeader}>{c}</Text>)}
+              <View style={[styles.tableRow, { borderColor: th.border }]}>
+                {cols.map(c => <AppText key={c} style={styles.colHeader}>{c}</AppText>)}
               </View>
               <FlatList
                 data={rows}
@@ -121,11 +123,11 @@ export default function AdminDBScreen({ navigation }) {
                 onEndReached={() => { if (rows.length < total) loadTable(selected.key, page + 1); }}
                 onEndReachedThreshold={0.5}
                 renderItem={({ item, index }) => (
-                  <View style={[styles.tableRow, index % 2 === 0 && styles.tableRowAlt]}>
+                  <View style={[styles.tableRow, { borderColor: th.border }, index % 2 === 0 && { backgroundColor: th.card }]}>
                     {cols.map(c => (
-                      <Text key={c} style={styles.cell} numberOfLines={1}>
+                      <AppText key={c} style={[styles.cell, { color: th.text }]} numberOfLines={1}>
                         {item[c] == null ? '—' : typeof item[c] === 'object' ? JSON.stringify(item[c]).slice(0, 40) : String(item[c]).slice(0, 40)}
-                      </Text>
+                      </AppText>
                     ))}
                   </View>
                 )}

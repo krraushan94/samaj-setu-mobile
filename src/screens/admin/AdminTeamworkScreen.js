@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { departmentAPI, teamworkAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { TaskBoard, ChatPanel } from '../../components/TeamworkViews';
@@ -10,6 +12,7 @@ const STATUS_COLORS = { pending: '#F9A825', in_progress: '#1565C0', completed: '
 // Admin — full access to every department's tasks and chat, plus a
 // cross-department summary (counts by status, overdue) no team role can see.
 export default function AdminTeamworkScreen() {
+  const t = useTheme();
   const user = useAuthStore((s) => s.user);
   const [view, setView] = useState('summary'); // summary | tasks | chat
   const [departments, setDepartments] = useState([]);
@@ -28,52 +31,52 @@ export default function AdminTeamworkScreen() {
   const selectedMembers = (departments.find(d => d.id === selectedDept)?.members || []).filter(m => m.is_active);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.tabRow}>
+    <View style={[styles.container, { backgroundColor: t.background }]}>
+      <View style={[styles.tabRow, { backgroundColor: t.card }]}>
         {['summary', 'tasks', 'chat'].map(v => (
-          <TouchableOpacity key={v} style={[styles.tab, view === v && styles.tabActive]} onPress={() => { setView(v); if (v === 'summary') loadSummary(); }}>
-            <Text style={[styles.tabText, view === v && styles.tabTextActive]}>{v === 'summary' ? 'Overview' : v === 'tasks' ? 'Tasks' : 'Chat'}</Text>
+          <TouchableOpacity key={v} style={[styles.tab, view === v && { borderBottomColor: t.primary }]} onPress={() => { setView(v); if (v === 'summary') loadSummary(); }}>
+            <AppText style={[styles.tabText, { color: t.textLight }, view === v && { color: t.primary }]}>{v === 'summary' ? 'Overview' : v === 'tasks' ? 'Tasks' : 'Chat'}</AppText>
           </TouchableOpacity>
         ))}
       </View>
 
       {view === 'summary' ? (
         <ScrollView contentContainerStyle={styles.summaryBody}>
-          <View style={styles.overdueCard}>
-            <Text style={styles.overdueCount}>{summary.overdueCount}</Text>
-            <Text style={styles.overdueLabel}>Overdue Task{summary.overdueCount === 1 ? '' : 's'}</Text>
+          <View style={[styles.overdueCard, { borderColor: t.danger }]}>
+            <AppText style={[styles.overdueCount, { color: t.danger }]}>{summary.overdueCount}</AppText>
+            <AppText style={[styles.overdueLabel, { color: t.danger }]}>Overdue Task{summary.overdueCount === 1 ? '' : 's'}</AppText>
           </View>
-          <Text style={styles.sectionTitle}>By Department</Text>
+          <AppText style={[styles.sectionTitle, { color: t.text }]}>By Department</AppText>
           {Object.entries(
             summary.byStatus.reduce((acc, row) => {
               (acc[row.department_name] = acc[row.department_name] || []).push(row);
               return acc;
             }, {})
           ).map(([deptName, rows]) => (
-            <View key={deptName} style={styles.deptCard}>
-              <Text style={styles.deptName}>{deptName}</Text>
+            <View key={deptName} style={[styles.deptCard, { backgroundColor: t.card }]}>
+              <AppText style={[styles.deptName, { color: t.text }]}>{deptName}</AppText>
               <View style={styles.statusRow}>
                 {rows.map(r => (
                   <View key={r.status} style={[styles.statusChip, { backgroundColor: STATUS_COLORS[r.status] + '22' }]}>
-                    <Text style={[styles.statusChipText, { color: STATUS_COLORS[r.status] }]}>{r.status}: {r.count}</Text>
+                    <AppText style={[styles.statusChipText, { color: STATUS_COLORS[r.status] }]}>{r.status}: {r.count}</AppText>
                   </View>
                 ))}
               </View>
             </View>
           ))}
-          {!summary.byStatus.length && <Text style={styles.empty}>No tasks created yet across any team</Text>}
+          {!summary.byStatus.length && <AppText style={[styles.empty, { color: t.textLight }]}>No tasks created yet across any team</AppText>}
         </ScrollView>
       ) : (
         <>
-          <ScrollView horizontal style={styles.deptPicker} contentContainerStyle={{ gap: 8, paddingHorizontal: 12 }}>
+          <ScrollView horizontal style={[styles.deptPicker, { backgroundColor: t.background }]} contentContainerStyle={{ gap: 8, paddingHorizontal: 12 }}>
             {departments.map(d => (
-              <TouchableOpacity key={d.id} style={[styles.deptChip, selectedDept === d.id && styles.deptChipActive]} onPress={() => setSelectedDept(d.id)}>
-                <Text style={[styles.deptChipText, selectedDept === d.id && styles.deptChipTextActive]}>{d.name}</Text>
+              <TouchableOpacity key={d.id} style={[styles.deptChip, { borderColor: t.border, backgroundColor: t.card }, selectedDept === d.id && { backgroundColor: t.primary, borderColor: t.primary }]} onPress={() => setSelectedDept(d.id)}>
+                <AppText style={[styles.deptChipText, { color: t.text }, selectedDept === d.id && styles.deptChipTextActive]}>{d.name}</AppText>
               </TouchableOpacity>
             ))}
           </ScrollView>
           {!selectedDept ? (
-            <Text style={styles.empty}>Pick a department above</Text>
+            <AppText style={[styles.empty, { color: t.textLight }]}>Pick a department above</AppText>
           ) : view === 'tasks' ? (
             <TaskBoard departmentId={selectedDept} members={selectedMembers} currentUserId={user?.id} canCreate />
           ) : (

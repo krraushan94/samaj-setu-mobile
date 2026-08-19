@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { useTheme } from '../../store/themeStore';
+import AppText from '../../components/AppText';
 import { authAPI } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useT } from '../../i18n';
 
 export default function LoginScreen({ navigation }) {
+  const t = useTheme();
   const setAuth  = useAuthStore((s) => s.setAuth);
   const tr       = useT().login;
   const trCommon = useT().common;
@@ -38,30 +41,30 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: t.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
         <Text style={styles.emoji}>🏛️</Text>
-        <Text style={styles.title}>{tr.title}</Text>
-        <Text style={styles.sub}>{tr.subtitle}</Text>
+        <AppText style={[styles.title, { color: t.text }]}>{tr.title}</AppText>
+        <AppText style={[styles.sub, { color: t.textLight }]}>{tr.subtitle}</AppText>
       </View>
-      <View style={styles.card}>
-        <TextInput style={styles.input} placeholder={tr.placeholder}
+      <View style={[styles.card, { backgroundColor: t.card }]}>
+        <TextInput style={[styles.input, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.placeholder} placeholderTextColor={t.textLight}
           value={username} onChangeText={setUsername} autoCapitalize="none" />
         <View style={styles.passwordRow}>
-          <TextInput style={[styles.input, styles.passwordInput]} placeholder={tr.password} secureTextEntry={!showPassword}
+          <TextInput style={[styles.input, styles.passwordInput, { borderColor: t.border, backgroundColor: t.inputBg, color: t.text }]} placeholder={tr.password} placeholderTextColor={t.textLight} secureTextEntry={!showPassword}
             value={password} onChangeText={setPassword} />
           <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(s => !s)} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
-            <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={22} color={COLORS.textLight} />
+            <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={22} color={t.textLight} />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.btn} onPress={login} disabled={loading}>
-          {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>{tr.loginBtn}</Text>}
+        <TouchableOpacity style={[styles.btn, { backgroundColor: t.primary }]} onPress={login} disabled={loading}>
+          {loading ? <ActivityIndicator color="#FFF" /> : <AppText style={styles.btnText}>{tr.loginBtn}</AppText>}
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.link}>{tr.signUp}</Text>
+          <AppText style={[styles.link, { color: t.secondary }]}>{tr.signUp}</AppText>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={[styles.link, { marginTop: 4 }]}>{tr.forgotPassword || 'Forgot password?'}</Text>
+          <AppText style={[styles.link, { color: t.secondary, marginTop: 4 }]}>{tr.forgotPassword || 'Forgot password?'}</AppText>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
