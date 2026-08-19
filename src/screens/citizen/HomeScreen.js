@@ -72,6 +72,7 @@ export default function HomeScreen({ navigation }) {
         {/* Action Cards */}
         <View style={styles.actionsGrid}>
           <ActionCard emoji="🔴" label={tr.logIssue}   color="#FFF3F3" border={COLORS.danger}     onPress={() => navigation.navigate('IssueCategory')} />
+          <ActionCard emoji="👷" label={tr.bmsZone}    color="#E0F2F1" border='#00695C'            onPress={() => navigation.navigate('IssueCategory', { type: 'labour' })} />
           <ActionCard emoji="💬" label={tr.feedback}   color="#F3F7FF" border={COLORS.secondary}  onPress={() => navigation.navigate('IssueCategory', { type: 'feedback' })} />
           <ActionCard emoji="💡" label={tr.suggestion} color="#FFFFF3" border='#F9A825'            onPress={() => navigation.navigate('IssueCategory', { type: 'development' })} />
           <ActionCard emoji="📢" label={tr.others}     color="#F3FFF3" border={COLORS.success}    onPress={() => navigation.navigate('IssueCategory', { type: 'others' })} />

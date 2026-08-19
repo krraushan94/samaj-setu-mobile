@@ -49,7 +49,6 @@ export const ISSUE_CATEGORIES = [
   { key: 'development',    label: 'Development',       icon: 'location-city',   color: '#607D8B' },
   { key: 'feedback',       label: 'Feedback',          icon: 'feedback',        color: '#00BCD4' },
   { key: 'others',         label: 'Others',            icon: 'more-horiz',      color: '#9E9E9E' },
-  { key: 'labour',         label: 'Labour / Workers (BMS)', icon: 'work',       color: '#00695C' },
 ];
 
 export const SUB_CATEGORIES = {

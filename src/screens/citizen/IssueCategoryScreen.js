@@ -29,17 +29,26 @@ export default function IssueCategoryScreen({ navigation, route }) {
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
 
-  // BMS/labour entry gate — shown once, right when the citizen taps the Labour category card,
-  // before they even pick a worker type. Pre-filled from the account where possible, since
-  // most citizens are reporting their own situation — but every field stays editable, since a
-  // BMS volunteer/caregiver may be filing on behalf of a different worker entirely.
-  const [showBmsIntake, setShowBmsIntake] = useState(false);
-  const [bmsDetails, setBmsDetails] = useState({
-    fullName: '', aadharNumber: '', voterIdNumber: '', organisationName: '',
+  // BMS/labour entry gate — BMS Zone is its own top-level entry point on the Home screen
+  // (not one of the regular issue categories), so landing here with type: 'labour' shows
+  // this intake form immediately rather than the category grid. Pre-filled from the account
+  // where possible, since most citizens are reporting their own situation — but every field
+  // stays editable, since a BMS volunteer/caregiver may be filing on behalf of a different
+  // worker entirely.
+  const [showBmsIntake, setShowBmsIntake] = useState(route.params?.type === 'labour');
+  const [bmsDetails, setBmsDetails] = useState(() => ({
+    fullName: user?.full_name || '', aadharNumber: user?.aadhar_number || '', voterIdNumber: user?.voter_id_number || '', organisationName: '',
     idCardNumber: '', sector: '', monthlyWage: '', employmentDuration: '',
-    employerContact: '', isBmsMember: false, bmsMembershipNumber: '',
-  });
+    employerContact: '', isBmsMember: false, bmsMembershipNumber: '', liveLocation: '',
+  }));
   const setBms = (k, v) => setBmsDetails(d => ({ ...d, [k]: v }));
+
+  const bmsAutoLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') return Alert.alert(trCommon.error, 'Permission needed');
+    const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    setBms('liveLocation', `${loc.coords.latitude.toFixed(5)}, ${loc.coords.longitude.toFixed(5)}`);
+  };
 
   const isFeeExempt = PAYMENT_EXEMPT_GROUPS.includes(category) || PAYMENT_EXEMPT_SUBCATEGORY_LABELS.includes(subCategory);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -173,7 +182,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
     // silently rather than asking a second time — only accounts missing both (e.g. very old
     // ones from before it was mandatory) need to provide one here.
     const hasIdOnFile = !!(user?.aadhar_number || user?.voter_id_number);
-    const canContinue = bmsDetails.fullName.trim() && bmsDetails.organisationName.trim()
+    const canContinue = bmsDetails.fullName.trim() && bmsDetails.organisationName.trim() && bmsDetails.liveLocation.trim()
       && (hasIdOnFile || bmsDetails.aadharNumber.trim() || bmsDetails.voterIdNumber.trim());
     return (
       <View style={[styles.container, { backgroundColor: th.background }]}>
@@ -196,6 +205,14 @@ export default function IssueCategoryScreen({ navigation, route }) {
               <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.voterIdNumber} onChangeText={(v) => setBms('voterIdNumber', v.toUpperCase())} placeholder={tr.bmsVoterId} autoCapitalize="characters" maxLength={10} />
             </>
           )}
+
+          <AppText style={[styles.label, { color: th.text }]}>{tr.bmsLiveLocation}</AppText>
+          <View style={styles.row}>
+            <TextInput style={[styles.input, { flex: 1, borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.liveLocation} onChangeText={(v) => setBms('liveLocation', v)} placeholder={tr.bmsLiveLocationPlaceholder} />
+            <TouchableOpacity style={[styles.gpsBtn, { backgroundColor: th.card, borderColor: th.border }]} onPress={bmsAutoLocation} accessibilityLabel="Use current GPS location for worker">
+              <MaterialIcons name="gps-fixed" size={22} color={th.primary} />
+            </TouchableOpacity>
+          </View>
 
           <AppText style={[styles.label, { color: th.text }]}>{tr.bmsOrgName}</AppText>
           <TextInput style={[styles.input, { borderColor: th.border, backgroundColor: th.inputBg, color: th.text }]} placeholderTextColor={th.textLight} value={bmsDetails.organisationName} onChangeText={(v) => setBms('organisationName', v)} placeholder={tr.bmsOrgNamePlaceholder} />
@@ -299,15 +316,7 @@ export default function IssueCategoryScreen({ navigation, route }) {
             <View style={styles.grid}>
               {ISSUE_CATEGORIES.map(cat => (
                 <TouchableOpacity key={cat.key} style={[styles.catCard, { borderColor: cat.color, backgroundColor: cat.color + '15' }]}
-                  onPress={() => {
-                    setCategory(cat.key); setSubCategory('');
-                    if (cat.key === 'labour') {
-                      setBmsDetails(d => ({ ...d, fullName: d.fullName || user?.full_name || '', aadharNumber: d.aadharNumber || user?.aadhar_number || '', voterIdNumber: d.voterIdNumber || user?.voter_id_number || '' }));
-                      setShowBmsIntake(true);
-                    } else {
-                      setStep(1);
-                    }
-                  }}>
+                  onPress={() => { setCategory(cat.key); setSubCategory(''); setStep(1); }}>
                   <MaterialIcons name={cat.icon} size={28} color={cat.color} />
                   <AppText style={[styles.catLabel, { color: cat.color }]}>{trCat.groups?.[cat.key] || cat.label}</AppText>
                 </TouchableOpacity>
